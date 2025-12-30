@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#141414" />
+    <meta name="description" content="KANIFLIX - Stream your favorite movies and TV shows" />
+    <title>KANIFLIX</title>
+    
+    <!-- Block popups and ad-related features -->
+    <meta http-equiv="Permissions-Policy" content="popups=(), popups-to-escape-sandbox=()" />
+    
+    <!-- Preconnect to image CDN -->
+    <link rel="preconnect" href="https://image.tmdb.org" />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
+    
+    <!-- Block common ad/tracking scripts inline -->
+    <script>
+      // Immediately block popup/ad functions before any scripts load
+      (function() {
+        'use strict';
+        
+        // Store original for our own use if needed
+        const _open = window.open;
+        
+        // Block ALL window.open calls - streaming embeds don't need to open new windows
+        window.open = function(url, target, features) {
+          console.log('[KANIFLIX AdBlock] Blocked popup attempt:', url);
+          return null;
+        };
+        
+        // Block location changes to ad domains
+        const blockedDomains = ['tmll', 'rg4', 'rg3', 'rg5', '.xyz', '.top', '.icu', '.buzz', '.click', '.link', 'popads', 'popcash'];
+        
+        // Override location setter
+        const originalLocation = window.location;
+        let currentHref = window.location.href;
+        
+        // Intercept location.href changes
+        const checkAndBlockNavigation = (url) => {
+          if (!url) return false;
+          const urlStr = url.toString().toLowerCase();
+          for (const domain of blockedDomains) {
+            if (urlStr.includes(domain)) {
+              console.log('[KANIFLIX AdBlock] Blocked navigation to:', url);
+              return true;
+            }
+          }
+          return false;
+        };
+        
+        // Override location.assign
+        const _assign = window.location.assign;
+        window.location.assign = function(url) {
+          if (checkAndBlockNavigation(url)) return;
+          return _assign.call(window.location, url);
+        };
+        
+        // Override location.replace
+        const _replace = window.location.replace;
+        window.location.replace = function(url) {
+          if (checkAndBlockNavigation(url)) return;
+          return _replace.call(window.location, url);
+        };
+        
+        // Block alert/confirm/prompt spam from ads
+        const _alert = window.alert;
+        window.alert = function(msg) {
+          console.log('[KANIFLIX AdBlock] Blocked alert:', msg);
+          return undefined;
+        };
+        
+        window.confirm = function(msg) {
+          console.log('[KANIFLIX AdBlock] Blocked confirm:', msg);
+          return false;
+        };
+        
+        window.prompt = function(msg) {
+          console.log('[KANIFLIX AdBlock] Blocked prompt:', msg);
+          return null;
+        };
+        
+        // Block document.write (used by many ads)
+        const _write = document.write;
+        document.write = function(markup) {
+          if (markup && (markup.includes('<script') || markup.includes('ad') || markup.includes('click'))) {
+            console.log('[KANIFLIX AdBlock] Blocked document.write');
+            return;
+          }
+          return _write.call(document, markup);
+        };
+        
+        // Block createElement for script/iframe injection
+        const _createElement = document.createElement;
+        document.createElement = function(tagName) {
+          const el = _createElement.call(document, tagName);
+          if (tagName.toLowerCase() === 'a') {
+            // Intercept link creation
+            const origSetAttribute = el.setAttribute.bind(el);
+            el.setAttribute = function(name, value) {
+              if (name === 'href' && checkAndBlockNavigation(value)) {
+                return;
+              }
+              return origSetAttribute(name, value);
+            };
+          }
+          return el;
+        };
+        
+        // Intercept click events that might trigger ads
+        document.addEventListener('click', function(e) {
+          const target = e.target;
+          if (target && target.tagName === 'A') {
+            const href = target.href || target.getAttribute('href');
+            if (checkAndBlockNavigation(href)) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              return false;
+            }
+          }
+        }, true);
+        
+      })();
+    </script>
+  </head>
+  <body class="bg-background text-text-primary antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

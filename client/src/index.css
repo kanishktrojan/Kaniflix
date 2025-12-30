@@ -1,0 +1,487 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for theming */
+:root {
+  --color-primary: #E50914;
+  --color-primary-hover: #F40612;
+  --color-background: #141414;
+  --color-background-secondary: #181818;
+  --color-surface: #2F2F2F;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B3B3B3;
+  --navbar-height: 68px;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+  
+  /* Mobile-first safe area insets */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-surface;
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  }
+
+  html {
+    @apply scroll-smooth;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-hover;
+  }
+
+  /* Hide scrollbar for carousel */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar for modals/lists */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary/30 text-text-primary;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Container padding - Netflix style */
+  .container-padding {
+    @apply px-4 md:px-12 lg:px-16;
+  }
+  
+  /* Minimum touch target size for accessibility */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Button base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-md
+           transition-all duration-200 focus:outline-none focus-visible:ring-2 
+           focus-visible:ring-offset-2 focus-visible:ring-offset-background
+           disabled:opacity-50 disabled:cursor-not-allowed
+           min-h-[44px]; /* Touch-friendly minimum height */
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-hover focus-visible:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white/20 text-white hover:bg-white/30 focus-visible:ring-white;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-white hover:bg-white/10 focus-visible:ring-white;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-full bg-background-secondary/80 backdrop-blur-sm
+           hover:bg-surface transition-colors duration-200;
+  }
+
+  /* Card styles */
+  .card {
+    @apply relative overflow-hidden rounded-md bg-background-card
+           transition-transform duration-300 ease-out;
+  }
+
+  .card-hover {
+    @apply hover:scale-105 hover:z-10 cursor-pointer;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 bg-surface text-text-primary rounded-md
+           border border-transparent focus:border-text-secondary
+           focus:outline-none transition-colors duration-200
+           placeholder:text-text-muted;
+  }
+
+  /* Gradient overlays */
+  .gradient-to-t {
+    background: linear-gradient(to top, rgba(20, 20, 20, 1) 0%, rgba(20, 20, 20, 0) 100%);
+  }
+
+  .gradient-to-b {
+    background: linear-gradient(to bottom, rgba(20, 20, 20, 1) 0%, rgba(20, 20, 20, 0) 100%);
+  }
+
+  .gradient-to-r {
+    background: linear-gradient(to right, rgba(20, 20, 20, 1) 0%, rgba(20, 20, 20, 0) 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(
+      to right,
+      rgba(20, 20, 20, 1) 0%,
+      rgba(20, 20, 20, 0.7) 50%,
+      rgba(20, 20, 20, 0) 100%
+    );
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply bg-gradient-to-r from-surface via-surface-hover to-surface
+           bg-[length:200%_100%] animate-shimmer rounded;
+  }
+
+  /* Text truncation */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Rating badge */
+  .rating-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-warning/20 
+           text-warning text-xs font-semibold rounded;
+  }
+
+  /* Genre tag */
+  .genre-tag {
+    @apply px-3 py-1 bg-surface text-text-secondary text-sm rounded-full
+           hover:bg-surface-hover transition-colors duration-200;
+  }
+}
+
+/* Utility styles */
+@layer utilities {
+  /* Safe area padding */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Aspect ratios */
+  .aspect-poster {
+    aspect-ratio: 2 / 3;
+  }
+
+  .aspect-backdrop {
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Text shadow for readability on images */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md;
+  }
+
+  /* Hide on touch devices */
+  @media (hover: none) {
+    .hover-only {
+      display: none;
+    }
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Player iframe styles */
+.player-container {
+  @apply relative w-full bg-black;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+}
+
+.player-container iframe {
+  @apply absolute inset-0 w-full h-full;
+  border: none;
+}
+
+/* React Query loading overlay */
+.loading-overlay {
+  @apply fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+/* ========================================
+   AD BLOCKER STYLES
+   Hide common ad elements that might leak through
+   ======================================== */
+
+/* Block ad containers */
+[class*="ad-container"],
+[class*="ad-wrapper"],
+[class*="ad-overlay"],
+[class*="advertisement"],
+[class*="advert-"],
+[class*="ads-container"],
+[class*="sponsored"],
+[id*="ad-container"],
+[id*="ad-wrapper"],
+[id*="advertisement"],
+[id*="google_ads"],
+[id*="AdSlot"],
+[data-ad],
+[data-ad-slot],
+[data-ad-client],
+[data-adunit],
+.adsbygoogle,
+ins.adsbygoogle {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+}
+
+/* Block popup overlays */
+[class*="popup-overlay"],
+[class*="modal-ad"],
+[class*="interstitial"],
+[class*="preroll"],
+[class*="overlay-ad"],
+[id*="popup"],
+[id*="modal-ad"],
+div[style*="z-index: 9999"],
+div[style*="z-index: 99999"],
+div[style*="z-index: 999999"],
+div[style*="position: fixed"][style*="z-index"]:not(.video-modal):not(.modal):not([class*="player"]) {
+  display: none !important;
+}
+
+/* Prevent iframe-based ads outside our player */
+iframe:not([src*="vidrock"]):not([src*="youtube"]):not([src*="vimeo"]):not([class*="player"]) {
+  /* Don't completely hide as some might be legitimate, but limit their impact */
+  max-width: 1px !important;
+  max-height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure our player iframe is always visible and hide scrollbars */
+iframe[src*="vidrock"],
+iframe[src*="vidsrc"],
+.embed-player iframe {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  pointer-events: auto !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  overflow: hidden !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+/* Hide scrollbars on iframe */
+iframe[src*="vidrock"]::-webkit-scrollbar,
+iframe[src*="vidsrc"]::-webkit-scrollbar,
+.embed-player iframe::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Player container - prevent any overflow/scrollbars */
+.player-container,
+.embed-player,
+[class*="player"] {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.player-container::-webkit-scrollbar,
+.embed-player::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Block external links styled as buttons (common ad pattern) */
+a[target="_blank"][rel*="sponsored"],
+a[target="_blank"][href*="click"],
+a[target="_blank"][href*="redirect"],
+a[target="_blank"][href*="track"] {
+  display: none !important;
+}
+
+/* Prevent body scroll lock from ads */
+body.no-scroll,
+body.modal-open:not(.kaniflix-modal) {
+  overflow: auto !important;
+}
+
+/* ========================================
+   MOBILE-SPECIFIC STYLES
+   ======================================== */
+
+/* Mobile touch optimizations */
+@media (max-width: 768px) {
+  /* Larger touch targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+  
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Smooth momentum scrolling on iOS */
+  .overflow-x-auto,
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for iOS Safari 100vh issue */
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  
+  .h-screen {
+    height: 100dvh;
+  }
+}
+
+/* Mobile landscape video optimization */
+@media (max-width: 896px) and (orientation: landscape) {
+  .video-modal {
+    padding: 0;
+  }
+  
+  .video-modal-content {
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
