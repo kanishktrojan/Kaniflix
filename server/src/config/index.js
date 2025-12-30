@@ -5,6 +5,10 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT, 10) || 5000,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  // Allowed origins for CORS (comma-separated in env, e.g., "https://app.vercel.app,http://localhost:5173")
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : [process.env.CLIENT_URL || 'http://localhost:5173'],
 
   // MongoDB Configuration
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/kaniflix',

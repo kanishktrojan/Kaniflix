@@ -38,8 +38,19 @@ class App {
     }));
 
     // CORS configuration
+    const allowedOrigins = config.ALLOWED_ORIGINS;
     this.app.use(cors({
-      origin: config.CLIENT_URL,
+      origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.warn(`CORS blocked origin: ${origin}`);
+          callback(null, false);
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization']
