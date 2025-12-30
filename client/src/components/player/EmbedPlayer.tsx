@@ -5,12 +5,6 @@ import { cn } from '@/utils';
 // Vidrock.net base URL
 const VIDROCK_BASE_URL = 'https://vidrock.net';
 
-// Known ad domains to block via referrer policy
-const BLOCKED_AD_PATTERNS = [
-  'popads', 'popcash', 'propeller', 'exoclick', 'juicyads',
-  'trafficjunky', 'adcash', 'clickadu', 'hilltopads', 'pushground'
-];
-
 interface EmbedPlayerProps {
   tmdbId: number;
   mediaType: 'movie' | 'tv';

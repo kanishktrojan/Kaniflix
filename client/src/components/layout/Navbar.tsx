@@ -7,24 +7,6 @@ import { useAuthStore } from '@/store';
 import { useScrollPosition, useDebounce } from '@/hooks';
 import logo from '@/assets/kaniflix_logo.png';
 
-// Netflix-style text logo
-const KaniflixTextLogo: React.FC<{ className?: string }> = ({ className }) => (
-  <span
-    className={cn(
-      'text-2xl md:text-3xl font-black tracking-tight text-primary',
-      'drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]',
-      className
-    )}
-    style={{
-      fontFamily: "'Bebas Neue', 'Arial Black', sans-serif",
-      letterSpacing: '0.05em',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-    }}
-  >
-    KANIFLIX
-  </span>
-);
-
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/movies', label: 'Movies' },
