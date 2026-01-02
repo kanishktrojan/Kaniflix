@@ -16,6 +16,7 @@ import { MediaRow, CastGrid } from '@/components/media';
 import { VideoModal } from '@/components/player';
 import { Button, Image, Badge, Skeleton } from '@/components/ui';
 import { useAuthStore } from '@/store';
+import { useWatchProgress } from '@/hooks';
 import { getImageUrl, formatRuntime, formatCurrency, formatDate, cn } from '@/utils';
 import type { Video, ProductionCompany } from '@/types';
 
@@ -25,12 +26,22 @@ const MovieDetailsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const tmdbId = parseInt(id || '0');
 
   // Fetch movie details
   const { data: movie, isLoading } = useQuery({
     queryKey: ['movie', id],
-    queryFn: () => tmdbService.getMovieDetails(parseInt(id!)),
+    queryFn: () => tmdbService.getMovieDetails(tmdbId),
     enabled: !!id,
+  });
+
+  // Netflix-grade progress tracking hook
+  const { handlePlayerEvent, handleMediaData, saveOnClose } = useWatchProgress({
+    tmdbId,
+    mediaType: 'movie',
+    title: movie?.title || '',
+    posterPath: movie?.posterPath,
+    backdropPath: movie?.backdropPath,
   });
 
   // Fetch credits
@@ -104,33 +115,9 @@ const MovieDetailsPage: React.FC = () => {
   };
 
   const handleClosePlayer = useCallback(() => {
+    saveOnClose();
     setIsPlayerOpen(false);
-  }, []);
-
-  // Handle progress updates for continue watching
-  const updateProgress = useMutation({
-    mutationFn: ({ progress, duration }: { progress: number; duration: number }) => {
-      return userContentService.updateProgress({
-        tmdbId: parseInt(id!),
-        mediaType: 'movie',
-        progress: Math.floor((progress / duration) * 100),
-        currentTime: progress,
-        duration,
-        title: movie?.title || '',
-        posterPath: movie?.posterPath,
-        backdropPath: movie?.backdropPath,
-      });
-    },
-  });
-
-  const handleProgressUpdate = useCallback((progress: number, duration: number) => {
-    if (!isAuthenticated) return;
-    // Only save progress every 30 seconds to avoid too many requests
-    const progressPercent = (progress / duration) * 100;
-    if (progressPercent > 5 && (Math.floor(progress) % 30 === 0 || progressPercent > 90)) {
-      updateProgress.mutate({ progress, duration });
-    }
-  }, [isAuthenticated, updateProgress]);
+  }, [saveOnClose]);
 
   const handleWatchlistToggle = () => {
     if (!isAuthenticated) {
@@ -175,16 +162,17 @@ const MovieDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Video Player Modal */}
+      {/* Video Player Modal with Netflix-grade Progress Tracking */}
       <VideoModal
         isOpen={isPlayerOpen}
         onClose={handleClosePlayer}
-        tmdbId={parseInt(id!)}
+        tmdbId={tmdbId}
         mediaType="movie"
         title={movie.title}
         posterPath={movie.posterPath || undefined}
         backdropPath={movie.backdropPath || undefined}
-        onProgressUpdate={handleProgressUpdate}
+        onPlayerEvent={handlePlayerEvent}
+        onMediaData={handleMediaData}
       />
 
       {/* Hero Section */}

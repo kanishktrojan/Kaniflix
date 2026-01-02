@@ -83,7 +83,71 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    lockUntil: Date
+    lockUntil: Date,
+    
+    // ==================== EMBEDDED WATCHLIST ====================
+    // Store only essential data, fetch rest from TMDB
+    watchlist: [{
+      tmdbId: {
+        type: Number,
+        required: true
+      },
+      mediaType: {
+        type: String,
+        enum: ['movie', 'tv'],
+        required: true
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+
+    // ==================== EMBEDDED WATCH HISTORY ====================
+    // Store progress data, fetch media details from TMDB
+    watchHistory: [{
+      tmdbId: {
+        type: Number,
+        required: true
+      },
+      mediaType: {
+        type: String,
+        enum: ['movie', 'tv'],
+        required: true
+      },
+      // For TV Shows
+      seasonNumber: {
+        type: Number,
+        default: null
+      },
+      episodeNumber: {
+        type: Number,
+        default: null
+      },
+      // Progress tracking
+      progress: {
+        type: Number, // Percentage 0-100
+        default: 0,
+        min: 0,
+        max: 100
+      },
+      currentTime: {
+        type: Number, // Seconds
+        default: 0
+      },
+      duration: {
+        type: Number, // Total duration in seconds
+        default: 0
+      },
+      isCompleted: {
+        type: Boolean,
+        default: false
+      },
+      lastWatchedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
   {
     timestamps: true,
@@ -111,6 +175,12 @@ userSchema.virtual('isLocked').get(function() {
 // Pre-save middleware for password hashing
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
+  
+  // Check if password is already hashed (bcrypt hashes start with $2a$ or $2b$)
+  // This handles the case when transferring already-hashed password from OtpVerification
+  if (this.password && this.password.startsWith('$2')) {
+    return next(); // Already hashed, skip
+  }
   
   try {
     const salt = await bcrypt.genSalt(12);

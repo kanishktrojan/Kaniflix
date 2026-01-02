@@ -11,6 +11,7 @@ interface MediaCardProps {
   variant?: 'poster' | 'backdrop' | 'featured';
   showInfo?: boolean;
   inWatchlist?: boolean;
+  onPlay?: (item: MediaItem | Movie | TVShow) => void;
   onAddToWatchlist?: () => void;
   onRemoveFromWatchlist?: () => void;
   className?: string;
@@ -21,6 +22,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   variant = 'poster',
   showInfo = true,
   inWatchlist = false,
+  onPlay,
   onAddToWatchlist,
   onRemoveFromWatchlist,
   className,
@@ -35,7 +37,12 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   const handlePlay = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/watch/${item.mediaType}/${item.id}`);
+    if (onPlay) {
+      onPlay(item);
+    } else {
+      // Fallback: navigate to details page which has VideoModal
+      navigate(`/${item.mediaType}/${item.id}`);
+    }
   };
 
   const handleWatchlistClick = (e: React.MouseEvent) => {
@@ -189,7 +196,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   );
 };
 
-// Continue Watching Card with progress bar
+// Continue Watching Card with progress bar - Netflix Style
 export const ContinueWatchingCard: React.FC<{
   item: MediaItem & { progress?: number; seasonNumber?: number; episodeNumber?: number };
   className?: string;
@@ -197,14 +204,14 @@ export const ContinueWatchingCard: React.FC<{
   onRemove?: (item: MediaItem & { progress?: number; seasonNumber?: number; episodeNumber?: number }) => void;
 }> = ({ item, className, onPlay, onRemove }) => {
   const navigate = useNavigate();
+  const [isHovered, setIsHovered] = React.useState(false);
 
   const handlePlay = () => {
     if (onPlay) {
       onPlay(item);
-    } else if (item.mediaType === 'tv' && item.seasonNumber && item.episodeNumber) {
-      navigate(`/watch/tv/${item.id}?s=${item.seasonNumber}&e=${item.episodeNumber}`);
     } else {
-      navigate(`/watch/${item.mediaType}/${item.id}`);
+      // Fallback: go to details page if no onPlay handler
+      navigate(`/${item.mediaType}/${item.id}`);
     }
   };
 
@@ -220,9 +227,11 @@ export const ContinueWatchingCard: React.FC<{
         'aspect-backdrop',
         className
       )}
-      whileHover={{ scale: 1.05 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
       onClick={handlePlay}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <Image
         src={item.backdropPath || item.posterPath || ''}
@@ -231,47 +240,75 @@ export const ContinueWatchingCard: React.FC<{
         className="w-full h-full"
       />
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+      {/* Dark overlay for better contrast */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
 
-      {/* Remove button - top right corner, always visible on hover */}
+      {/* Remove button - top right corner, Netflix style */}
       {onRemove && (
-        <button
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ 
+            opacity: isHovered ? 1 : 0, 
+            scale: isHovered ? 1 : 0.8 
+          }}
+          transition={{ duration: 0.15 }}
           onClick={handleRemove}
-          className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:scale-110"
+          className="absolute top-2 right-2 p-1 bg-black/70 hover:bg-black rounded-full z-20 border border-white/30 hover:border-white/50"
           title="Remove from Continue Watching"
         >
           <X className="w-4 h-4 text-white" />
-        </button>
+        </motion.button>
       )}
 
-      {/* Content */}
+      {/* Netflix-style centered play button */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 1 }}
+          animate={{ 
+            scale: isHovered ? 1.15 : 1,
+            opacity: isHovered ? 1 : 0.85
+          }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="relative"
+        >
+          {/* Outer ring */}
+          <div className={cn(
+            "w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center",
+            "bg-black/40 border-2 border-white",
+            "transition-all duration-200",
+            isHovered && "bg-white border-white"
+          )}>
+            {/* Play icon */}
+            <Play 
+              className={cn(
+                "w-5 h-5 md:w-6 md:h-6 ml-0.5 transition-colors duration-200",
+                isHovered ? "text-black fill-black" : "text-white fill-white"
+              )} 
+            />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Content - bottom */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
+        <h3 className="font-medium text-sm line-clamp-1 text-white drop-shadow-md">{item.title}</h3>
         {item.mediaType === 'tv' && item.seasonNumber && item.episodeNumber && (
-          <p className="text-xs text-text-secondary mt-0.5">
+          <p className="text-xs text-gray-300 mt-0.5 drop-shadow-sm">
             S{item.seasonNumber}:E{item.episodeNumber}
           </p>
         )}
         
-        {/* Progress bar */}
+        {/* Netflix-style progress bar */}
         {item.progress !== undefined && (
-          <div className="mt-2 h-1 bg-surface rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary"
-              style={{ width: `${item.progress}%` }}
+          <div className="mt-2 h-[3px] bg-gray-600 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-red-600 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${item.progress}%` }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             />
           </div>
         )}
-      </div>
-
-      {/* Play button on hover */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <motion.div
-          className="p-3 bg-white/90 rounded-full text-black"
-        >
-          <Play className="w-8 h-8 fill-current" />
-        </motion.div>
       </div>
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
@@ -13,7 +13,11 @@ type SignupStep = 'details' | 'otp';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser } = useAuthStore();
+  
+  // Get the page user was trying to access before being redirected to signup
+  const from = (location.state as { from?: string })?.from || '/';
   
   const [step, setStep] = useState<SignupStep>('details');
   const [formData, setFormData] = useState({
@@ -88,7 +92,8 @@ const SignupPage: React.FC = () => {
     mutationFn: (otpCode: string) => authService.verifyOTP(formData.email, otpCode),
     onSuccess: (data) => {
       setUser(data.user);
-      navigate('/');
+      // Redirect to the page user was trying to access, or home
+      navigate(from, { replace: true });
     },
     onError: (error: Error) => {
       const message = error.message || 'Invalid OTP. Please try again.';
@@ -445,7 +450,11 @@ const SignupPage: React.FC = () => {
               {/* Sign In Link */}
               <p className="text-center mt-8 text-text-secondary">
                 Already have an account?{' '}
-                <Link to="/login" className="text-white hover:text-primary transition-colors font-medium">
+                <Link 
+                  to="/login" 
+                  state={{ from }}
+                  className="text-white hover:text-primary transition-colors font-medium"
+                >
                   Sign in
                 </Link>
               </p>

@@ -5,6 +5,45 @@ import { cn } from '@/utils';
 // Vidrock.net base URL
 const VIDROCK_BASE_URL = 'https://vidrock.net';
 
+// Player event types from vidrock.net API
+export type PlayerEventType = 'play' | 'pause' | 'seeked' | 'ended' | 'timeupdate';
+
+// Event data structure from vidrock.net
+export interface PlayerEventData {
+  event: PlayerEventType;
+  currentTime: number;
+  duration: number;
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  season?: number;
+  episode?: number;
+}
+
+// Media data structure from vidrock.net (for continue watching)
+export interface MediaProgressData {
+  id: number;
+  type: 'movie' | 'tv';
+  title: string;
+  poster_path: string;
+  backdrop_path: string;
+  progress: {
+    watched: number;
+    duration: number;
+  };
+  last_updated: number;
+  // TV-specific fields
+  number_of_episodes?: number;
+  number_of_seasons?: number;
+  last_season_watched?: string;
+  last_episode_watched?: string;
+  show_progress?: Record<string, {
+    season: string;
+    episode: string;
+    progress: { watched: number; duration: number };
+    last_updated: number;
+  }>;
+}
+
 interface EmbedPlayerProps {
   tmdbId: number;
   mediaType: 'movie' | 'tv';
@@ -14,7 +53,10 @@ interface EmbedPlayerProps {
   subtitle?: string;
   posterPath?: string;
   onBack?: () => void;
-  onProgressUpdate?: (progress: number, duration: number) => void;
+  /** Called on every player event (play, pause, seeked, ended, timeupdate) */
+  onPlayerEvent?: (event: PlayerEventData) => void;
+  /** Called when vidrock sends MEDIA_DATA with full progress info */
+  onMediaData?: (data: MediaProgressData) => void;
   className?: string;
 }
 
@@ -68,7 +110,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   subtitle,
   posterPath,
   onBack,
-  onProgressUpdate,
+  onPlayerEvent,
+  onMediaData,
   className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -209,32 +252,29 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   // Handle messages from the iframe (vidrock.net postMessage API)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Only accept messages from vidrock.net
+      // Security: Only accept messages from vidrock.net
       if (event.origin !== VIDROCK_BASE_URL) return;
 
-      // Handle media data (continue watching feature)
+      // Handle MEDIA_DATA - full progress info for continue watching
       if (event.data?.type === 'MEDIA_DATA') {
-        const mediaData = event.data.data;
-        // Store in localStorage for continue watching
-        const existingData = JSON.parse(localStorage.getItem('kaniflix-progress') || '[]');
-        const updatedData = existingData.filter((item: { id: number }) => item.id !== mediaData.id);
-        updatedData.push(mediaData);
-        localStorage.setItem('kaniflix-progress', JSON.stringify(updatedData));
+        const mediaData = event.data.data as MediaProgressData;
+        if (onMediaData) {
+          onMediaData(mediaData);
+        }
       }
 
-      // Handle player events
+      // Handle PLAYER_EVENT - granular playback events
       if (event.data?.type === 'PLAYER_EVENT') {
-        const { event: eventType, currentTime, duration } = event.data.data;
-        
-        if (eventType === 'timeupdate' && onProgressUpdate) {
-          onProgressUpdate(currentTime, duration);
+        const eventData = event.data.data as PlayerEventData;
+        if (onPlayerEvent) {
+          onPlayerEvent(eventData);
         }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onProgressUpdate]);
+  }, [onPlayerEvent, onMediaData]);
 
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {

@@ -16,6 +16,7 @@ import { MediaRow, CastGrid } from '@/components/media';
 import { EpisodeList, SeasonSelector, VideoModal } from '@/components/player';
 import { Button, Image, Badge, Skeleton } from '@/components/ui';
 import { useAuthStore } from '@/store';
+import { useWatchProgress } from '@/hooks';
 import { getImageUrl, formatDate, cn } from '@/utils';
 import type { Season, Episode, Video } from '@/types';
 
@@ -24,6 +25,7 @@ const TVDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
+  const tmdbId = parseInt(id || '0');
 
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
@@ -32,8 +34,19 @@ const TVDetailsPage: React.FC = () => {
   // Fetch TV show details
   const { data: show, isLoading } = useQuery({
     queryKey: ['tv', id],
-    queryFn: () => tmdbService.getTVDetails(parseInt(id!)),
+    queryFn: () => tmdbService.getTVDetails(tmdbId),
     enabled: !!id,
+  });
+
+  // Netflix-grade progress tracking hook
+  const { handlePlayerEvent, handleMediaData, saveOnClose } = useWatchProgress({
+    tmdbId,
+    mediaType: 'tv',
+    title: show?.name || '',
+    posterPath: show?.posterPath,
+    backdropPath: show?.backdropPath,
+    seasonNumber: currentEpisode.season,
+    episodeNumber: currentEpisode.episode,
   });
 
   // Fetch credits
@@ -119,40 +132,15 @@ const TVDetailsPage: React.FC = () => {
   };
 
   const handleClosePlayer = useCallback(() => {
+    saveOnClose();
     setIsPlayerOpen(false);
-  }, []);
+  }, [saveOnClose]);
 
   const handleEpisodeChange = useCallback((season: number, episode: number) => {
     // Find episode name
     const ep = seasonData?.episodes?.find((e: Episode) => e.episodeNumber === episode);
     setCurrentEpisode({ season, episode, name: ep?.name });
   }, [seasonData]);
-
-  // Handle progress updates for continue watching
-  const updateProgress = useMutation({
-    mutationFn: ({ progress, duration }: { progress: number; duration: number }) => {
-      return userContentService.updateProgress({
-        tmdbId: parseInt(id!),
-        mediaType: 'tv',
-        progress: Math.floor((progress / duration) * 100),
-        currentTime: progress,
-        duration,
-        title: show?.title || '',
-        posterPath: show?.posterPath,
-        backdropPath: show?.backdropPath,
-        seasonNumber: currentEpisode.season,
-        episodeNumber: currentEpisode.episode,
-      });
-    },
-  });
-
-  const handleProgressUpdate = useCallback((progress: number, duration: number) => {
-    if (!isAuthenticated) return;
-    const progressPercent = (progress / duration) * 100;
-    if (progressPercent > 5 && (Math.floor(progress) % 30 === 0 || progressPercent > 90)) {
-      updateProgress.mutate({ progress, duration });
-    }
-  }, [isAuthenticated, updateProgress]);
 
   const handleWatchlistToggle = () => {
     if (!isAuthenticated) {
@@ -211,11 +199,11 @@ const TVDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Video Player Modal */}
+      {/* Video Player Modal with Progress Tracking */}
       <VideoModal
         isOpen={isPlayerOpen}
         onClose={handleClosePlayer}
-        tmdbId={parseInt(id!)}
+        tmdbId={tmdbId}
         mediaType="tv"
         title={show.title}
         posterPath={show.posterPath || undefined}
@@ -227,7 +215,8 @@ const TVDetailsPage: React.FC = () => {
         seasons={show.seasons}
         onEpisodeChange={handleEpisodeChange}
         onSeasonChange={handleSeasonChangeInModal}
-        onProgressUpdate={handleProgressUpdate}
+        onPlayerEvent={handlePlayerEvent}
+        onMediaData={handleMediaData}
       />
 
       {/* Hero Section */}

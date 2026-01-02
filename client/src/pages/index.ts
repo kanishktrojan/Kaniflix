@@ -2,7 +2,6 @@ export { default as HomePage } from './HomePage';
 export { default as BrowsePage } from './BrowsePage';
 export { default as MovieDetailsPage } from './MovieDetailsPage';
 export { default as TVDetailsPage } from './TVDetailsPage';
-export { default as WatchPage } from './WatchPage';
 export { default as SearchPage } from './SearchPage';
 export { default as LoginPage } from './LoginPage';
 export { default as SignupPage } from './SignupPage';

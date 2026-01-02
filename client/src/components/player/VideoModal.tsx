@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, ChevronDown, Play, Clock } from 'lucide-react';
-import { EmbedPlayer } from './EmbedPlayer';
+import { EmbedPlayer, type PlayerEventData, type MediaProgressData } from './EmbedPlayer';
 import { cn } from '@/utils';
 import { getImageUrl } from '@/utils';
 import type { Episode, Season } from '@/types';
@@ -22,7 +22,10 @@ interface VideoModalProps {
   seasons?: Season[];
   onEpisodeChange?: (season: number, episode: number) => void;
   onSeasonChange?: (season: number) => void;
-  onProgressUpdate?: (progress: number, duration: number) => void;
+  /** Called on every player event (play, pause, timeupdate, ended) for progress tracking */
+  onPlayerEvent?: (eventData: PlayerEventData) => void;
+  /** Called when VidRock sends full progress snapshot (MEDIA_DATA) */
+  onMediaData?: (data: MediaProgressData) => void;
 }
 
 export const VideoModal: React.FC<VideoModalProps> = ({
@@ -40,7 +43,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   seasons,
   onEpisodeChange,
   onSeasonChange,
-  onProgressUpdate,
+  onPlayerEvent,
+  onMediaData,
 }) => {
   // Track the displayed season in episode list (may differ from currently playing season)
   const [displayedSeason, setDisplayedSeason] = useState(season || 1);
@@ -164,7 +168,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     title={title}
                     subtitle={subtitle}
                     posterPath={backdropPath || posterPath}
-                    onProgressUpdate={onProgressUpdate}
+                    onPlayerEvent={onPlayerEvent}
+                    onMediaData={onMediaData}
                   />
                   
                   {/* Episode Navigation Overlay for TV Shows */}

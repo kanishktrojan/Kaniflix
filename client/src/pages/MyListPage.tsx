@@ -3,12 +3,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Trash2, Play, Film, Tv } from 'lucide-react';
-import { userContentService } from '@/services';
+import { userContentService, tmdbService } from '@/services';
 import { MediaCard } from '@/components/media';
 import { VideoModal } from '@/components/player';
 import { Button, Badge } from '@/components/ui';
 import { useAuthStore } from '@/store';
+import { useWatchProgress } from '@/hooks';
 import type { WatchlistItem, MediaItem } from '@/types';
+
+// Minimal watchlist item from backend (just IDs)
+interface MinimalWatchlistItem {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  addedAt?: string | Date;
+}
 
 const MyListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +27,18 @@ const MyListPage: React.FC = () => {
   const [isPlayerOpen, setIsPlayerOpen] = React.useState(false);
   const [playingItem, setPlayingItem] = React.useState<WatchlistItem | null>(null);
 
+  // Determine media type for progress tracking
+  const playingMediaType = (playingItem?.mediaType || 'movie') as 'movie' | 'tv';
+
+  // Netflix-grade progress tracking hook
+  const { handlePlayerEvent, handleMediaData, saveOnClose } = useWatchProgress({
+    tmdbId: playingItem?.tmdbId || 0,
+    mediaType: playingMediaType,
+    title: playingItem?.title || '',
+    posterPath: playingItem?.posterPath,
+    backdropPath: playingItem?.backdropPath,
+  });
+
   // Redirect if not authenticated
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -26,12 +46,57 @@ const MyListPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch watchlist
-  const { data: watchlist, isLoading } = useQuery({
+  // Fetch watchlist (minimal data - just IDs)
+  const { data: watchlistRaw, isLoading: watchlistLoading } = useQuery({
     queryKey: ['watchlist'],
     queryFn: () => userContentService.getWatchlist(),
     enabled: isAuthenticated,
   });
+
+  // Enrich watchlist with TMDB data
+  const { data: watchlist, isLoading: enrichLoading } = useQuery({
+    queryKey: ['watchlist-enriched', watchlistRaw?.results],
+    queryFn: async () => {
+      const items = watchlistRaw?.results || [];
+      if (items.length === 0) return { results: [] };
+      
+      const enriched = await Promise.all(
+        items.map(async (item: MinimalWatchlistItem) => {
+          try {
+            const details = item.mediaType === 'movie'
+              ? await tmdbService.getMovieDetails(item.tmdbId)
+              : await tmdbService.getTVDetails(item.tmdbId);
+            
+            return {
+              tmdbId: item.tmdbId,
+              mediaType: item.mediaType,
+              addedAt: item.addedAt,
+              title: details.title || details.name || 'Unknown',
+              posterPath: details.posterPath || details.poster_path,
+              backdropPath: details.backdropPath || details.backdrop_path,
+              overview: details.overview,
+              voteAverage: details.voteAverage || details.vote_average,
+              releaseDate: details.releaseDate || details.release_date || details.first_air_date,
+            };
+          } catch {
+            return {
+              tmdbId: item.tmdbId,
+              mediaType: item.mediaType,
+              addedAt: item.addedAt,
+              title: 'Unknown',
+              posterPath: null,
+              backdropPath: null,
+            };
+          }
+        })
+      );
+      return { results: enriched as WatchlistItem[] };
+    },
+    enabled: !!watchlistRaw?.results,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = watchlistLoading || enrichLoading;
 
   // Remove from watchlist mutation
   const removeFromWatchlist = useMutation({
@@ -60,6 +125,7 @@ const MyListPage: React.FC = () => {
   };
 
   const handleClosePlayer = () => {
+    saveOnClose();
     setIsPlayerOpen(false);
     setPlayingItem(null);
   };
@@ -78,7 +144,7 @@ const MyListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen pt-8">
-      {/* Video Player Modal */}
+      {/* Video Player Modal with Progress Tracking */}
       {playingItem && (
         <VideoModal
           isOpen={isPlayerOpen}
@@ -90,6 +156,8 @@ const MyListPage: React.FC = () => {
           backdropPath={playingItem.backdropPath || undefined}
           season={playingItem.mediaType === 'tv' ? 1 : undefined}
           episode={playingItem.mediaType === 'tv' ? 1 : undefined}
+          onPlayerEvent={handlePlayerEvent}
+          onMediaData={handleMediaData}
         />
       )}
 

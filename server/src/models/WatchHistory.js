@@ -99,7 +99,7 @@ watchHistorySchema.statics.getContinueWatching = async function(userId, limit = 
   return this.find({
     user: userId,
     isCompleted: false,
-    progress: { $gt: 5, $lt: 95 } // Between 5% and 95%
+    progress: { $gte: 0, $lt: 95 } // Any progress below 95% (not completed)
   })
     .sort({ lastWatchedAt: -1 })
     .limit(limit)

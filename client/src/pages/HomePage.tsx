@@ -1,11 +1,27 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { tmdbService, userContentService } from '@/services';
+import { tmdbService, userContentService, progressService } from '@/services';
 import { HeroBanner, MediaRow } from '@/components/media';
 import { VideoModal } from '@/components/player';
 import { useAuthStore } from '@/store';
-import type { MediaItem, WatchHistory } from '@/types';
+import { useWatchProgress } from '@/hooks';
+import type { MediaItem, WatchHistory, WatchlistItem } from '@/types';
+
+// Helper to enrich minimal data (just tmdbId/mediaType) with TMDB details
+interface MinimalHistoryItem {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  progress?: number;
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+}
+
+interface MinimalWatchlistItem {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  addedAt?: string | Date;
+}
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,29 +34,192 @@ const HomePage: React.FC = () => {
   const [playingItem, setPlayingItem] = useState<MediaItem | null>(null);
   const [playingSeason, setPlayingSeason] = useState<number | undefined>();
   const [playingEpisode, setPlayingEpisode] = useState<number | undefined>();
+  
+  // State to trigger re-computation of local continue watching
+  const [localCWVersion, setLocalCWVersion] = useState(0);
 
-  // Fetch continue watching for authenticated users
-  const { data: continueWatching, isLoading: continueWatchingLoading } = useQuery({
-    queryKey: ['continue-watching'],
+  // Determine media type for the playing item
+  const playingMediaType = (playingItem?.mediaType || 'movie') as 'movie' | 'tv';
+
+  // Netflix-grade progress tracking hook (local-first with backend sync)
+  const { handlePlayerEvent, handleMediaData, saveOnClose } = useWatchProgress({
+    tmdbId: playingItem?.id || 0,
+    mediaType: playingMediaType,
+    title: playingItem?.title || '',
+    posterPath: playingItem?.posterPath,
+    backdropPath: playingItem?.backdropPath,
+    seasonNumber: playingSeason,
+    episodeNumber: playingEpisode,
+  });
+
+  // ==========================================================================
+  // CONTINUE WATCHING - Local-First with Backend Merge
+  // Primary: localStorage (instant, offline-capable)
+  // Secondary: Backend (cross-device sync for authenticated users)
+  // ==========================================================================
+  
+  // Get local continue watching instantly
+  const localContinueWatching = useMemo(() => {
+    return progressService.getContinueWatching(20);
+  }, [isPlayerOpen, localCWVersion]); // Refresh when modal closes or item removed
+
+  // Fetch backend continue watching for authenticated users
+  const { data: backendContinueWatchingRaw, isLoading: backendLoading } = useQuery({
+    queryKey: ['continue-watching-backend'],
     queryFn: () => userContentService.getContinueWatching(20),
     enabled: isAuthenticated,
+    staleTime: 30000, // Cache for 30 seconds (backend sync is secondary)
   });
 
   // Fetch watchlist status for all items (for + button functionality)
-  const { data: watchlistData } = useQuery({
+  const { data: watchlistRaw } = useQuery({
     queryKey: ['watchlist'],
     queryFn: () => userContentService.getWatchlist(1, 100),
     enabled: isAuthenticated,
   });
 
+  // ==========================================================================
+  // CONTINUE WATCHING DATA - Merge local + backend
+  // Local data has poster/backdrop from VidRock's MEDIA_DATA
+  // Backend data might have different items (from other devices)
+  // ==========================================================================
+  
+  // Merge local and backend continue watching (deduplicated, most recent wins)
+  const mergedContinueWatching = useMemo(() => {
+    const itemMap = new Map<string, any>();
+    
+    // Add local items first (these have poster/backdrop from VidRock)
+    localContinueWatching.forEach(item => {
+      const key = `${item.type}-${item.id}`;
+      itemMap.set(key, {
+        tmdbId: item.id,
+        mediaType: item.type,
+        title: item.title,
+        posterPath: item.posterPath,
+        backdropPath: item.backdropPath,
+        progress: item.progress,
+        seasonNumber: item.seasonNumber,
+        episodeNumber: item.episodeNumber,
+        lastUpdated: item.lastUpdated,
+      });
+    });
+    
+    // Merge backend items (for cross-device sync)
+    if (backendContinueWatchingRaw) {
+      backendContinueWatchingRaw.forEach((item: MinimalHistoryItem) => {
+        const key = `${item.mediaType}-${item.tmdbId}`;
+        const existing = itemMap.get(key);
+        
+        // Only add/update if backend is more recent or doesn't exist locally
+        if (!existing) {
+          itemMap.set(key, {
+            tmdbId: item.tmdbId,
+            mediaType: item.mediaType,
+            progress: item.progress,
+            seasonNumber: item.seasonNumber,
+            episodeNumber: item.episodeNumber,
+            // These will be enriched
+            title: undefined,
+            posterPath: undefined,
+            backdropPath: undefined,
+          });
+        }
+      });
+    }
+    
+    return Array.from(itemMap.values());
+  }, [localContinueWatching, backendContinueWatchingRaw]);
+
+  // Enrich continue watching items that don't have TMDB data
+  const { data: continueWatching, isLoading: continueWatchingLoading } = useQuery({
+    queryKey: ['continue-watching-enriched', mergedContinueWatching],
+    queryFn: async () => {
+      if (mergedContinueWatching.length === 0) return [];
+      
+      const enriched = await Promise.all(
+        mergedContinueWatching.map(async (item: any) => {
+          // If we already have title (from localStorage), no need to fetch
+          if (item.title) {
+            return item;
+          }
+          
+          // Fetch TMDB data for items without metadata
+          try {
+            const details = item.mediaType === 'movie'
+              ? await tmdbService.getMovieDetails(item.tmdbId)
+              : await tmdbService.getTVDetails(item.tmdbId);
+            
+            return {
+              ...item,
+              title: details.title || details.name || 'Unknown',
+              posterPath: details.posterPath || details.poster_path,
+              backdropPath: details.backdropPath || details.backdrop_path,
+              overview: details.overview,
+              voteAverage: details.voteAverage || details.vote_average,
+            };
+          } catch {
+            return {
+              ...item,
+              title: 'Unknown',
+              posterPath: null,
+              backdropPath: null,
+            };
+          }
+        })
+      );
+      return enriched;
+    },
+    enabled: mergedContinueWatching.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Enrich watchlist with TMDB data
+  const { data: watchlistData } = useQuery({
+    queryKey: ['watchlist-enriched', watchlistRaw?.results],
+    queryFn: async () => {
+      const items = watchlistRaw?.results || [];
+      if (items.length === 0) return { results: [] };
+      
+      const enriched = await Promise.all(
+        items.map(async (item: MinimalWatchlistItem) => {
+          try {
+            const details = item.mediaType === 'movie'
+              ? await tmdbService.getMovieDetails(item.tmdbId)
+              : await tmdbService.getTVDetails(item.tmdbId);
+            
+            return {
+              ...item,
+              title: details.title || details.name || 'Unknown',
+              posterPath: details.posterPath || details.poster_path,
+              backdropPath: details.backdropPath || details.backdrop_path,
+              overview: details.overview,
+              voteAverage: details.voteAverage || details.vote_average,
+              releaseDate: details.releaseDate || details.release_date || details.first_air_date,
+            };
+          } catch {
+            return {
+              ...item,
+              title: 'Unknown',
+              posterPath: null,
+              backdropPath: null,
+            };
+          }
+        })
+      );
+      return { results: enriched };
+    },
+    enabled: !!watchlistRaw?.results && watchlistRaw.results.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Create a set of watchlist item IDs for quick lookup
   const watchlistIds = useMemo(() => {
     const ids = new Set<string>();
-    watchlistData?.results?.forEach(item => {
+    (watchlistRaw?.results || []).forEach((item: MinimalWatchlistItem) => {
       ids.add(`${item.mediaType}-${item.tmdbId}`);
     });
     return ids;
-  }, [watchlistData]);
+  }, [watchlistRaw?.results]);
 
   // Add to watchlist mutation
   const addToWatchlistMutation = useMutation({
@@ -125,15 +304,15 @@ const HomePage: React.FC = () => {
     return trending?.results?.slice(0, 5) || [];
   }, [trending?.results]);
 
-  // Transform continue watching data to MediaItem format
+  // Transform continue watching data to MediaItem format (already enriched with TMDB data)
   const continueWatchingItems = useMemo(() => {
-    return (continueWatching || []).map((item: WatchHistory) => ({
+    return (continueWatching || []).map((item: any) => ({
       id: item.tmdbId,
-      title: item.title,
+      title: item.title || 'Unknown',
       posterPath: item.posterPath,
       backdropPath: item.backdropPath,
-      overview: '',
-      voteAverage: 0,
+      overview: item.overview || '',
+      voteAverage: item.voteAverage || 0,
       mediaType: item.mediaType,
       progress: item.progress,
       seasonNumber: item.seasonNumber,
@@ -167,12 +346,12 @@ const HomePage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   const handleClosePlayer = useCallback(() => {
+    // Save progress before closing
+    saveOnClose();
     setIsPlayerOpen(false);
     setPlayingSeason(undefined);
     setPlayingEpisode(undefined);
-    // Refresh continue watching after closing player
-    queryClient.invalidateQueries({ queryKey: ['continue-watching'] });
-  }, [queryClient]);
+  }, [saveOnClose]);
 
   const handleInfo = (item: MediaItem) => {
     const mediaType = item.mediaType || (item.title ? 'movie' : 'tv');
@@ -196,28 +375,40 @@ const HomePage: React.FC = () => {
     return watchlistIds.has(`${item.mediaType}-${item.id}`);
   }, [watchlistIds]);
 
-  // Continue watching handler - remove from history
+  // Continue watching handler - remove from history (both local and backend)
   const handleRemoveFromContinueWatching = useCallback((item: MediaItem) => {
-    removeFromHistoryMutation.mutate({ tmdbId: item.id, mediaType: item.mediaType });
-  }, [removeFromHistoryMutation]);
-
-  // Determine media type for the playing item
-  const playingMediaType = playingItem?.mediaType || (playingItem?.title ? 'movie' : 'tv');
+    // Remove from localStorage (instant update)
+    progressService.removeProgress(item.id, item.mediaType);
+    
+    // Trigger immediate UI update by incrementing version
+    setLocalCWVersion(v => v + 1);
+    
+    // Remove from backend (async, non-blocking)
+    if (isAuthenticated) {
+      removeFromHistoryMutation.mutate({ tmdbId: item.id, mediaType: item.mediaType });
+    }
+    
+    // Also invalidate backend queries for consistency
+    queryClient.invalidateQueries({ queryKey: ['continue-watching-backend'] });
+    queryClient.invalidateQueries({ queryKey: ['continue-watching-enriched'] });
+  }, [isAuthenticated, removeFromHistoryMutation, queryClient]);
 
   return (
     <div className="min-h-screen bg-[#141414]">
-      {/* Video Player Modal */}
+      {/* Video Player Modal with Netflix-grade Progress Tracking */}
       {playingItem && (
         <VideoModal
           isOpen={isPlayerOpen}
           onClose={handleClosePlayer}
           tmdbId={playingItem.id}
-          mediaType={playingMediaType as 'movie' | 'tv'}
+          mediaType={playingMediaType}
           title={(playingItem as any).title || (playingItem as any).name || ''}
           posterPath={playingItem.posterPath || undefined}
           backdropPath={playingItem.backdropPath || undefined}
           season={playingSeason || (playingMediaType === 'tv' ? 1 : undefined)}
           episode={playingEpisode || (playingMediaType === 'tv' ? 1 : undefined)}
+          onPlayerEvent={handlePlayerEvent}
+          onMediaData={handleMediaData}
         />
       )}
 
@@ -268,6 +459,7 @@ const HomePage: React.FC = () => {
           title="Trending Now"
           items={trending?.results?.slice(1) || []}
           isLoading={trendingLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -278,6 +470,7 @@ const HomePage: React.FC = () => {
           title="Popular on KANIFLIX"
           items={popularMovies?.results || []}
           isLoading={popularMoviesLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -288,6 +481,7 @@ const HomePage: React.FC = () => {
           title="TV Shows"
           items={popularTV?.results || []}
           isLoading={popularTVLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -298,6 +492,7 @@ const HomePage: React.FC = () => {
           title="Top 10 Movies Today"
           items={topRatedMovies?.results?.slice(0, 10) || []}
           isLoading={topRatedMoviesLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -308,6 +503,7 @@ const HomePage: React.FC = () => {
           title="New Releases"
           items={nowPlayingMovies?.results || []}
           isLoading={nowPlayingLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -318,6 +514,7 @@ const HomePage: React.FC = () => {
           title="Top 10 TV Shows Today"
           items={topRatedTV?.results?.slice(0, 10) || []}
           isLoading={topRatedTVLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -328,6 +525,7 @@ const HomePage: React.FC = () => {
           title="Airing Today"
           items={airingTodayTV?.results || []}
           isLoading={airingTodayLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}
@@ -338,6 +536,7 @@ const HomePage: React.FC = () => {
           title="Coming This Week"
           items={upcomingMovies?.results || []}
           isLoading={upcomingLoading}
+          onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
           isInWatchlist={isInWatchlist}

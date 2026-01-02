@@ -54,11 +54,17 @@ otpVerificationSchema.statics.generateOTP = function() {
 };
 
 /**
- * Hash OTP before saving
+ * Hash OTP and password before saving
+ * Both are sensitive data and should never be stored in plain text
  */
 otpVerificationSchema.pre('save', async function(next) {
+  // Hash OTP if modified
   if (this.isModified('otp')) {
     this.otp = await bcrypt.hash(this.otp, 10);
+  }
+  // Hash password if modified (IMPORTANT: password should never be stored in plain text)
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 12);
   }
   next();
 });

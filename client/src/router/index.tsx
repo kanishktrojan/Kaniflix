@@ -10,7 +10,6 @@ import {
   BrowsePage,
   MovieDetailsPage,
   TVDetailsPage,
-  WatchPage,
   SearchPage,
   LoginPage,
   SignupPage,
@@ -96,22 +95,6 @@ const router = createBrowserRouter([
         ),
       },
     ],
-  },
-  {
-    path: '/watch/movie/:id',
-    element: (
-      <ProtectedRoute>
-        <WatchPage mediaType="movie" />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/watch/tv/:id',
-    element: (
-      <ProtectedRoute>
-        <WatchPage mediaType="tv" />
-      </ProtectedRoute>
-    ),
   },
   {
     path: '/login',

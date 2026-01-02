@@ -105,9 +105,11 @@ class AuthService {
     }
 
     // OTP is valid - create the actual user
+    // Password is already hashed in OtpVerification
+    // User model's pre-save hook detects this and skips re-hashing
     const user = await User.create({
       email: pendingVerification.email,
-      password: pendingVerification.password,
+      password: pendingVerification.password, // Already hashed
       username: pendingVerification.username,
       isEmailVerified: true
     });

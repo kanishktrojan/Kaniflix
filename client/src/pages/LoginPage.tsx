@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
@@ -10,7 +10,11 @@ import { cn } from '@/utils';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuthStore();
+  
+  // Get the page user was trying to access before being redirected to login
+  const from = (location.state as { from?: string })?.from || '/';
   
   const [formData, setFormData] = useState({
     email: '',
@@ -23,7 +27,8 @@ const LoginPage: React.FC = () => {
   const loginMutation = useMutation({
     mutationFn: (data: { email: string; password: string }) => login(data),
     onSuccess: () => {
-      navigate('/');
+      // Redirect to the page user was trying to access, or home
+      navigate(from, { replace: true });
     },
     onError: (error: Error) => {
       setErrors({
@@ -209,7 +214,11 @@ const LoginPage: React.FC = () => {
           {/* Sign Up Link */}
           <p className="text-center mt-8 text-text-secondary">
             New to KANIFLIX?{' '}
-            <Link to="/signup" className="text-white hover:text-primary transition-colors font-medium">
+            <Link 
+              to="/signup" 
+              state={{ from }}
+              className="text-white hover:text-primary transition-colors font-medium"
+            >
               Sign up now
             </Link>
           </p>

@@ -127,6 +127,7 @@ export const MediaRow: React.FC<MediaRowProps> = ({
                 item={item}
                 variant={variant}
                 inWatchlist={isInWatchlist?.(item) || false}
+                onPlay={onPlay}
                 onAddToWatchlist={() => onAddToWatchlist?.(item)}
                 onRemoveFromWatchlist={() => onRemoveFromWatchlist?.(item)}
                 className={cn(
