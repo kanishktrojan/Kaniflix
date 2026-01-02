@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Check, Info } from 'lucide-react';
+import { Play, Plus, Check, Info, X } from 'lucide-react';
 import { cn, getYear } from '@/utils';
 import { Image, RatingBadge, MatchBadge } from '@/components/ui';
 import type { MediaItem, Movie, TVShow } from '@/types';
@@ -193,15 +193,24 @@ export const MediaCard: React.FC<MediaCardProps> = ({
 export const ContinueWatchingCard: React.FC<{
   item: MediaItem & { progress?: number; seasonNumber?: number; episodeNumber?: number };
   className?: string;
-}> = ({ item, className }) => {
+  onPlay?: (item: MediaItem & { progress?: number; seasonNumber?: number; episodeNumber?: number }) => void;
+  onRemove?: (item: MediaItem & { progress?: number; seasonNumber?: number; episodeNumber?: number }) => void;
+}> = ({ item, className, onPlay, onRemove }) => {
   const navigate = useNavigate();
 
   const handlePlay = () => {
-    if (item.mediaType === 'tv' && item.seasonNumber && item.episodeNumber) {
+    if (onPlay) {
+      onPlay(item);
+    } else if (item.mediaType === 'tv' && item.seasonNumber && item.episodeNumber) {
       navigate(`/watch/tv/${item.id}?s=${item.seasonNumber}&e=${item.episodeNumber}`);
     } else {
       navigate(`/watch/${item.mediaType}/${item.id}`);
     }
+  };
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRemove?.(item);
   };
 
   return (
@@ -225,6 +234,17 @@ export const ContinueWatchingCard: React.FC<{
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
+      {/* Remove button - top right corner, always visible on hover */}
+      {onRemove && (
+        <button
+          onClick={handleRemove}
+          className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 hover:scale-110"
+          title="Remove from Continue Watching"
+        >
+          <X className="w-4 h-4 text-white" />
+        </button>
+      )}
+
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
         <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
@@ -246,10 +266,8 @@ export const ContinueWatchingCard: React.FC<{
       </div>
 
       {/* Play button on hover */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
           className="p-3 bg-white/90 rounded-full text-black"
         >
           <Play className="w-8 h-8 fill-current" />

@@ -272,6 +272,9 @@ export const storage = {
 /**
  * Wake up the backend server (for Render free tier cold starts)
  * Calls a lightweight health endpoint to spin up the server
+ * This runs silently in the background when user visits the site
+ * so that backend services (auth, watchlist, streaming) are ready
+ * when needed.
  */
 export const wakeUpBackend = async (): Promise<void> => {
   const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -280,12 +283,17 @@ export const wakeUpBackend = async (): Promise<void> => {
     console.log('[Backend] Waking up server...');
     const startTime = Date.now();
     
-    // Call health endpoint with a short timeout
+    // Call health endpoint - don't wait too long as this is non-blocking
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     const response = await fetch(`${API_URL}/health`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
     });
     
+    clearTimeout(timeoutId);
     const elapsed = Date.now() - startTime;
     
     if (response.ok) {
@@ -295,6 +303,44 @@ export const wakeUpBackend = async (): Promise<void> => {
     }
   } catch (error) {
     // Silent fail - the server might be cold starting
-    console.log('[Backend] Server is starting up, please wait...');
+    // This is expected behavior for Render free tier
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('[Backend] Server is taking longer to wake up (cold start in progress)');
+    } else {
+      console.log('[Backend] Server is starting up, please wait...');
+    }
+  }
+};
+
+/**
+ * Periodically ping the backend to keep it warm during active sessions
+ * This helps prevent cold starts during active user sessions
+ */
+let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+
+export const startBackendKeepAlive = (intervalMs = 10 * 60 * 1000): void => {
+  // Default: ping every 10 minutes to prevent 15-minute sleep
+  if (keepAliveInterval) {
+    console.log('[Backend] Keep-alive already running');
+    return;
+  }
+  
+  console.log(`[Backend] Starting keep-alive (every ${intervalMs / 60000} minutes)`);
+  keepAliveInterval = setInterval(async () => {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    try {
+      await fetch(`${API_URL}/health`, { method: 'GET' });
+      console.log('[Backend] Keep-alive ping sent');
+    } catch {
+      // Silent fail
+    }
+  }, intervalMs);
+};
+
+export const stopBackendKeepAlive = (): void => {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    keepAliveInterval = null;
+    console.log('[Backend] Keep-alive stopped');
   }
 };

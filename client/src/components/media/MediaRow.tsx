@@ -12,6 +12,11 @@ interface MediaRowProps {
   variant?: 'poster' | 'backdrop' | 'continue';
   isLoading?: boolean;
   className?: string;
+  onPlay?: (item: MediaItem) => void;
+  onRemove?: (item: MediaItem) => void;
+  onAddToWatchlist?: (item: MediaItem) => void;
+  onRemoveFromWatchlist?: (item: MediaItem) => void;
+  isInWatchlist?: (item: MediaItem) => boolean;
 }
 
 export const MediaRow: React.FC<MediaRowProps> = ({
@@ -20,6 +25,11 @@ export const MediaRow: React.FC<MediaRowProps> = ({
   variant = 'poster',
   isLoading = false,
   className,
+  onPlay,
+  onRemove,
+  onAddToWatchlist,
+  onRemoveFromWatchlist,
+  isInWatchlist,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -104,6 +114,8 @@ export const MediaRow: React.FC<MediaRowProps> = ({
               <ContinueWatchingCard
                 key={`${item.mediaType}-${item.id}`}
                 item={item as MediaItem & { progress?: number }}
+                onPlay={onPlay}
+                onRemove={onRemove}
                 className={cn(
                   'flex-shrink-0',
                   variant === 'continue' && 'w-[300px]'
@@ -114,6 +126,9 @@ export const MediaRow: React.FC<MediaRowProps> = ({
                 key={`${item.mediaType}-${item.id}`}
                 item={item}
                 variant={variant}
+                inWatchlist={isInWatchlist?.(item) || false}
+                onAddToWatchlist={() => onAddToWatchlist?.(item)}
+                onRemoveFromWatchlist={() => onRemoveFromWatchlist?.(item)}
                 className={cn(
                   'flex-shrink-0',
                   variant === 'poster' && 'w-[140px] md:w-[180px]',

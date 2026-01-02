@@ -8,6 +8,30 @@ import type {
   PaginatedResponse,
 } from '@/types';
 
+// Helper to transform backend paginated response to frontend format
+interface BackendPaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalResults: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+function transformPaginatedResponse<T>(response: BackendPaginatedResponse<T>): PaginatedResponse<T> {
+  return {
+    results: response.data || [],
+    page: response.pagination?.page || 1,
+    total_pages: response.pagination?.totalPages || 1,
+    total_results: response.pagination?.totalResults || 0,
+  };
+}
+
 interface ProgressUpdate {
   mediaType: MediaType;
   tmdbId: number;
@@ -86,10 +110,10 @@ export const userContentService = {
    * Get watch history
    */
   async getWatchHistory(page = 1, limit = 20): Promise<PaginatedResponse<WatchHistory>> {
-    const response = await api.get<PaginatedResponse<WatchHistory>>(
+    const response = await api.get<BackendPaginatedResponse<WatchHistory>>(
       `/user/history?page=${page}&limit=${limit}`
     );
-    return response.data;
+    return transformPaginatedResponse(response.data);
   },
 
   /**
@@ -133,10 +157,10 @@ export const userContentService = {
     params.append('limit', String(limit));
     if (mediaType) params.append('mediaType', mediaType);
 
-    const response = await api.get<PaginatedResponse<WatchlistItem>>(
+    const response = await api.get<BackendPaginatedResponse<WatchlistItem>>(
       `/user/watchlist?${params}`
     );
-    return response.data;
+    return transformPaginatedResponse(response.data);
   },
 
   /**

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Trash2, Play, Film, Tv } from 'lucide-react';
 import { userContentService } from '@/services';
 import { MediaCard } from '@/components/media';
+import { VideoModal } from '@/components/player';
 import { Button, Badge } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import type { WatchlistItem, MediaItem } from '@/types';
@@ -13,6 +14,10 @@ const MyListPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
+
+  // Video modal state
+  const [isPlayerOpen, setIsPlayerOpen] = React.useState(false);
+  const [playingItem, setPlayingItem] = React.useState<WatchlistItem | null>(null);
 
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -50,7 +55,13 @@ const MyListPage: React.FC = () => {
 
   const handlePlay = (item: WatchlistItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/watch/${item.mediaType}/${item.tmdbId}`);
+    setPlayingItem(item);
+    setIsPlayerOpen(true);
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setPlayingItem(null);
   };
 
   const handleRemove = (item: WatchlistItem, e: React.MouseEvent) => {
@@ -67,6 +78,21 @@ const MyListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen pt-8">
+      {/* Video Player Modal */}
+      {playingItem && (
+        <VideoModal
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+          tmdbId={playingItem.tmdbId}
+          mediaType={playingItem.mediaType}
+          title={playingItem.title}
+          posterPath={playingItem.posterPath || undefined}
+          backdropPath={playingItem.backdropPath || undefined}
+          season={playingItem.mediaType === 'tv' ? 1 : undefined}
+          episode={playingItem.mediaType === 'tv' ? 1 : undefined}
+        />
+      )}
+
       <div className="container-padding">
         {/* Header */}
         <div className="mb-8">

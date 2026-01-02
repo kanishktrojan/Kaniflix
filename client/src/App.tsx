@@ -4,10 +4,11 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AnimatePresence } from 'framer-motion';
 import { AppRouter } from '@/router';
 import { useAuthStore } from '@/store';
-import { wakeUpBackend } from '@/utils';
+import { wakeUpBackend, startBackendKeepAlive, stopBackendKeepAlive } from '@/utils';
 import logo from '@/assets/kaniflix_logo.png';
 
 // Wake up the backend immediately when app loads (for Render free tier)
+// This runs in background while content loads directly from TMDB API
 wakeUpBackend();
 
 // Create a client
@@ -24,11 +25,25 @@ const queryClient = new QueryClient({
 
 // Auth initializer component
 const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { checkAuth, isLoading } = useAuthStore();
+  const { checkAuth, isLoading, isAuthenticated } = useAuthStore();
 
   React.useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Start keep-alive when user is authenticated to prevent backend cold starts
+  // during active sessions (important for watchlist, watch history operations)
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      startBackendKeepAlive(10 * 60 * 1000); // Ping every 10 minutes
+    } else {
+      stopBackendKeepAlive();
+    }
+    
+    return () => {
+      stopBackendKeepAlive();
+    };
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
