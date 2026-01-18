@@ -32,13 +32,9 @@ module.exports = {
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || 'localhost',
   COOKIE_SECURE: process.env.COOKIE_SECURE === 'true',
 
-  // SMTP Email Configuration
-  SMTP_HOST: process.env.SMTP_HOST,
-  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
-  SMTP_SECURE: process.env.SMTP_SECURE || 'false',
-  SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASS: process.env.SMTP_PASS,
-  SMTP_FROM: process.env.SMTP_FROM,
+  // Email Service Configuration (external microservice)
+  EMAIL_SERVICE_URL: process.env.EMAIL_SERVICE_URL || 'http://localhost:5001',
+  EMAIL_SERVICE_API_KEY: process.env.EMAIL_SERVICE_API_KEY,
 
   // Image Sizes
   IMAGE_SIZES: {

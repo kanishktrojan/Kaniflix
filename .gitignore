@@ -9,6 +9,9 @@ dist/
 build/
 .cache/
 
+# Email
+email/
+
 # Environment files
 .env
 .env.local

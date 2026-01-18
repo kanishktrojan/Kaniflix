@@ -1,58 +1,83 @@
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const config = require('../config');
 
 /**
- * Email Service
- * Handles all email sending functionality
+ * Email Service Client
+ * Communicates with the external Email Service via HTTP
+ * 
+ * IMPORTANT: This service does NOT handle SMTP directly.
+ * All email delivery is delegated to the standalone Email Service.
  */
 class EmailService {
   constructor() {
-    this.transporter = null;
+    this.baseUrl = config.EMAIL_SERVICE_URL;
+    this.apiKey = config.EMAIL_SERVICE_API_KEY;
     this.initialized = false;
   }
 
   /**
-   * Initialize the email transporter
+   * Initialize the email service client
    */
   async initialize() {
     if (this.initialized) return;
 
-    // Check for required config
-    if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASS) {
-      console.warn('⚠️ Email service not configured. OTP emails will be logged to console.');
-      this.initialized = true;
-      return;
-    }
-
-    this.transporter = nodemailer.createTransport({
-      host: config.SMTP_HOST,
-      port: config.SMTP_PORT || 587,
-      secure: config.SMTP_SECURE === 'true',
-      auth: {
-        user: config.SMTP_USER,
-        pass: config.SMTP_PASS
-      }
-    });
-
-    // Verify connection
-    try {
-      await this.transporter.verify();
-      console.log('✅ Email service initialized and verified');
-    } catch (error) {
-      console.error('❌ Email service verification failed:', error.message);
-      console.error('   Check your SMTP credentials and settings');
-      // Keep the transporter to allow retry
+    // Check configuration
+    if (!this.baseUrl) {
+      console.warn('⚠️ EMAIL_SERVICE_URL not configured. Emails will be logged to console.');
+    } else {
+      console.log(`✅ Email Service client configured: ${this.baseUrl}`);
     }
 
     this.initialized = true;
   }
 
   /**
+   * Send email via the Email Service
+   * @param {Object} options - Email options
+   * @param {string} options.to - Recipient email
+   * @param {string} options.subject - Email subject
+   * @param {string} options.html - HTML content
+   * @returns {Promise<Object>} Send result
+   */
+  async sendEmail({ to, subject, html }) {
+    await this.initialize();
+
+    // Development fallback - log to console if service URL not configured
+    if (!this.baseUrl) {
+      console.log('\n📧 ========== EMAIL (DEV MODE) ==========');
+      console.log(`To: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`HTML Length: ${html.length} chars`);
+      console.log('=========================================\n');
+      return { success: true, dev: true };
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/send`,
+        { to, subject, html },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.apiKey && { 'X-API-Key': this.apiKey })
+          },
+          timeout: 30000 // 30 second timeout
+        }
+      );
+
+      console.log(`📧 Email sent via Email Service to ${to}`);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error('❌ Email Service error:', errorMessage);
+      throw new Error(`Failed to send email: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Send OTP verification email
    */
   async sendOTP(email, otp, username) {
-    await this.initialize();
-
     const subject = 'Verify Your KANIFLIX Account';
     const html = `
       <!DOCTYPE html>
@@ -117,42 +142,14 @@ class EmailService {
       </html>
     `;
 
-    // If transporter is not configured, log to console (development mode)
-    if (!this.transporter) {
-      console.log('\n📧 ========== EMAIL (DEV MODE) ==========');
-      console.log(`To: ${email}`);
-      console.log(`Subject: ${subject}`);
-      console.log(`OTP Code: ${otp}`);
-      console.log('=========================================\n');
-      return { success: true, dev: true };
-    }
-
-    try {
-      // Use SMTP_FROM if set, otherwise use SMTP_USER
-      const fromAddress = config.SMTP_FROM || config.SMTP_USER;
-      
-      const info = await this.transporter.sendMail({
-        from: fromAddress,
-        to: email,
-        subject,
-        html
-      });
-
-      console.log(`📧 OTP email sent to ${email}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error('❌ Error sending email:', error.message);
-      console.error('Full error:', error);
-      throw error;
-    }
+    // Send via Email Service
+    return this.sendEmail({ to: email, subject, html });
   }
 
   /**
    * Send password reset email
    */
   async sendPasswordReset(email, resetToken, username) {
-    await this.initialize();
-
     const resetUrl = `${config.CLIENT_URL}/reset-password?token=${resetToken}`;
     const subject = 'Reset Your KANIFLIX Password';
     const html = `
@@ -203,30 +200,8 @@ class EmailService {
       </html>
     `;
 
-    if (!this.transporter) {
-      console.log('\n📧 ========== EMAIL (DEV MODE) ==========');
-      console.log(`To: ${email}`);
-      console.log(`Subject: ${subject}`);
-      console.log(`Reset URL: ${resetUrl}`);
-      console.log('=========================================\n');
-      return { success: true, dev: true };
-    }
-
-    try {
-      const fromAddress = config.SMTP_FROM || config.SMTP_USER;
-      
-      const info = await this.transporter.sendMail({
-        from: fromAddress,
-        to: email,
-        subject,
-        html
-      });
-
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error('❌ Error sending email:', error.message);
-      throw error;
-    }
+    // Send via Email Service
+    return this.sendEmail({ to: email, subject, html });
   }
 }
 
