@@ -6,7 +6,7 @@ import { HeroBanner, MediaRow } from '@/components/media';
 import { VideoModal } from '@/components/player';
 import { useAuthStore } from '@/store';
 import { useWatchProgress } from '@/hooks';
-import type { MediaItem, WatchHistory, WatchlistItem } from '@/types';
+import type { MediaItem } from '@/types';
 
 // Helper to enrich minimal data (just tmdbId/mediaType) with TMDB details
 interface MinimalHistoryItem {
@@ -64,7 +64,7 @@ const HomePage: React.FC = () => {
   }, [isPlayerOpen, localCWVersion]); // Refresh when modal closes or item removed
 
   // Fetch backend continue watching for authenticated users
-  const { data: backendContinueWatchingRaw, isLoading: backendLoading } = useQuery({
+  const { data: backendContinueWatchingRaw } = useQuery({
     queryKey: ['continue-watching-backend'],
     queryFn: () => userContentService.getContinueWatching(20),
     enabled: isAuthenticated,
@@ -145,17 +145,17 @@ const HomePage: React.FC = () => {
           
           // Fetch TMDB data for items without metadata
           try {
-            const details = item.mediaType === 'movie'
+            const details: any = item.mediaType === 'movie'
               ? await tmdbService.getMovieDetails(item.tmdbId)
               : await tmdbService.getTVDetails(item.tmdbId);
             
             return {
               ...item,
-              title: details.title || details.name || 'Unknown',
-              posterPath: details.posterPath || details.poster_path,
-              backdropPath: details.backdropPath || details.backdrop_path,
+              title: details.title || 'Unknown',
+              posterPath: details.posterPath,
+              backdropPath: details.backdropPath,
               overview: details.overview,
-              voteAverage: details.voteAverage || details.vote_average,
+              voteAverage: details.voteAverage,
             };
           } catch {
             return {
@@ -173,8 +173,8 @@ const HomePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Enrich watchlist with TMDB data
-  const { data: watchlistData } = useQuery({
+  // Enrich watchlist with TMDB data (prefetching for potential future use)
+  const { data: _watchlistData } = useQuery({
     queryKey: ['watchlist-enriched', watchlistRaw?.results],
     queryFn: async () => {
       const items = watchlistRaw?.results || [];
@@ -183,18 +183,18 @@ const HomePage: React.FC = () => {
       const enriched = await Promise.all(
         items.map(async (item: MinimalWatchlistItem) => {
           try {
-            const details = item.mediaType === 'movie'
+            const details: any = item.mediaType === 'movie'
               ? await tmdbService.getMovieDetails(item.tmdbId)
               : await tmdbService.getTVDetails(item.tmdbId);
             
             return {
               ...item,
-              title: details.title || details.name || 'Unknown',
-              posterPath: details.posterPath || details.poster_path,
-              backdropPath: details.backdropPath || details.backdrop_path,
+              title: details.title || 'Unknown',
+              posterPath: details.posterPath,
+              backdropPath: details.backdropPath,
               overview: details.overview,
-              voteAverage: details.voteAverage || details.vote_average,
-              releaseDate: details.releaseDate || details.release_date || details.first_air_date,
+              voteAverage: details.voteAverage,
+              releaseDate: details.releaseDate || details.firstAirDate,
             };
           } catch {
             return {

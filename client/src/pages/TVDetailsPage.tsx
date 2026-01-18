@@ -42,7 +42,7 @@ const TVDetailsPage: React.FC = () => {
   const { handlePlayerEvent, handleMediaData, saveOnClose } = useWatchProgress({
     tmdbId,
     mediaType: 'tv',
-    title: show?.name || '',
+    title: show?.title || '',
     posterPath: show?.posterPath,
     backdropPath: show?.backdropPath,
     seasonNumber: currentEpisode.season,

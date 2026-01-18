@@ -9,7 +9,7 @@ import { VideoModal } from '@/components/player';
 import { Button, Badge } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useWatchProgress } from '@/hooks';
-import type { WatchlistItem, MediaItem } from '@/types';
+import type { MediaItem, WatchlistItem } from '@/types';
 
 // Minimal watchlist item from backend (just IDs)
 interface MinimalWatchlistItem {
@@ -63,7 +63,7 @@ const MyListPage: React.FC = () => {
       const enriched = await Promise.all(
         items.map(async (item: MinimalWatchlistItem) => {
           try {
-            const details = item.mediaType === 'movie'
+            const details: any = item.mediaType === 'movie'
               ? await tmdbService.getMovieDetails(item.tmdbId)
               : await tmdbService.getTVDetails(item.tmdbId);
             
@@ -71,12 +71,12 @@ const MyListPage: React.FC = () => {
               tmdbId: item.tmdbId,
               mediaType: item.mediaType,
               addedAt: item.addedAt,
-              title: details.title || details.name || 'Unknown',
-              posterPath: details.posterPath || details.poster_path,
-              backdropPath: details.backdropPath || details.backdrop_path,
+              title: details.title || 'Unknown',
+              posterPath: details.posterPath,
+              backdropPath: details.backdropPath,
               overview: details.overview,
-              voteAverage: details.voteAverage || details.vote_average,
-              releaseDate: details.releaseDate || details.release_date || details.first_air_date,
+              voteAverage: details.voteAverage,
+              releaseDate: details.releaseDate || details.firstAirDate,
             };
           } catch {
             return {
