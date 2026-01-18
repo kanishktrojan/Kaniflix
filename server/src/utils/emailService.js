@@ -52,24 +52,34 @@ class EmailService {
       return { success: true, dev: true };
     }
 
+    const targetUrl = `${this.baseUrl}/send`;
+    console.log(`📧 Attempting to send email to ${to} via ${targetUrl}`);
+
     try {
       const response = await axios.post(
-        `${this.baseUrl}/send`,
+        targetUrl,
         { to, subject, html },
         {
           headers: {
             'Content-Type': 'application/json',
             ...(this.apiKey && { 'X-API-Key': this.apiKey })
           },
-          timeout: 30000 // 30 second timeout
+          timeout: 60000 // 60 second timeout
         }
       );
 
       console.log(`📧 Email sent via Email Service to ${to}`);
       return response.data;
     } catch (error) {
+      console.error('❌ Email Service error details:');
+      console.error('   URL:', targetUrl);
+      console.error('   Error code:', error.code);
+      console.error('   Error message:', error.message);
+      if (error.response) {
+        console.error('   Response status:', error.response.status);
+        console.error('   Response data:', error.response.data);
+      }
       const errorMessage = error.response?.data?.message || error.message;
-      console.error('❌ Email Service error:', errorMessage);
       throw new Error(`Failed to send email: ${errorMessage}`);
     }
   }
