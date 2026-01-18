@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { ApiError } = require('../utils/apiHelpers');
 
 /**
  * User Schema
@@ -246,18 +247,22 @@ userSchema.statics.findByCredentials = async function(email, password) {
   const user = await this.findOne({ email }).select('+password');
   
   if (!user) {
-    throw new Error('Invalid credentials');
+    throw ApiError.unauthorized('No account found with this email address');
+  }
+
+  if (!user.isActive) {
+    throw ApiError.forbidden('This account has been deactivated');
   }
 
   if (user.isLocked) {
-    throw new Error('Account is temporarily locked. Please try again later.');
+    throw ApiError.tooManyRequests('Account is temporarily locked due to too many failed attempts. Please try again later.');
   }
 
   const isMatch = await user.comparePassword(password);
   
   if (!isMatch) {
     await user.incrementLoginAttempts();
-    throw new Error('Invalid credentials');
+    throw ApiError.unauthorized('Incorrect password. Please try again.');
   }
 
   await user.resetLoginAttempts();

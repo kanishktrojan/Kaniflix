@@ -43,8 +43,15 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Handle 401 errors (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't attempt token refresh for auth endpoints (login, register, etc.)
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login') ||
+                          originalRequest?.url?.includes('/auth/register') ||
+                          originalRequest?.url?.includes('/auth/verify-otp') ||
+                          originalRequest?.url?.includes('/auth/resend-otp') ||
+                          originalRequest?.url?.includes('/auth/refresh');
+
+    // Handle 401 errors (token expired) - but not for auth endpoints
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -80,10 +87,19 @@ api.interceptors.response.use(
         status: error.response?.status,
         message: error.message,
         url: originalRequest?.url,
+        data: error.response?.data,
       });
     }
 
-    return Promise.reject(error);
+    // Extract error message from API response
+    const apiErrorMessage = (error.response?.data as { message?: string })?.message;
+    const errorMessage = apiErrorMessage || error.message || 'An unexpected error occurred';
+    
+    // Create a new error with the API message
+    const enhancedError = new Error(errorMessage);
+    (enhancedError as Error & { status?: number }).status = error.response?.status;
+    
+    return Promise.reject(enhancedError);
   }
 );
 
