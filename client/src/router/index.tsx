@@ -15,6 +15,7 @@ import {
   SignupPage,
   MyListPage,
   ProfilePage,
+  NotFoundPage,
 } from '@/pages';
 import { useAuthStore } from '@/store';
 
@@ -114,7 +115,7 @@ const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/" replace />,
+    element: <NotFoundPage />,
   },
 ]);
 

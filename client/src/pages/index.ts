@@ -7,3 +7,4 @@ export { default as LoginPage } from './LoginPage';
 export { default as SignupPage } from './SignupPage';
 export { default as MyListPage } from './MyListPage';
 export { default as ProfilePage } from './ProfilePage';
+export { default as NotFoundPage } from './NotFoundPage';

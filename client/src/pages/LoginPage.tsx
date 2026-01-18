@@ -71,26 +71,28 @@ const LoginPage: React.FC = () => {
   return (
     <AuthLayout>
       <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-background/80 backdrop-blur-lg rounded-xl p-8 md:p-10 shadow-2xl">
+        {/* Card - min-height ensures consistent size with signup page */}
+        <div className="bg-background/80 backdrop-blur-lg rounded-xl p-8 md:p-10 shadow-2xl min-h-[580px] flex flex-col">
           <h1 className="text-3xl font-bold mb-2">Sign In</h1>
           <p className="text-text-muted mb-8">
             Welcome back to KANIFLIX
           </p>
 
-          {/* Error Message */}
-          {errors.general && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg mb-6"
-            >
-              {errors.general}
-            </motion.div>
-          )}
+          {/* Error Message - fixed height container to prevent layout shift */}
+          <div className="h-[60px] mb-2">
+            {errors.general && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg text-sm"
+              >
+                {errors.general}
+              </motion.div>
+            )}
+          </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
             <div>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
@@ -167,6 +169,9 @@ const LoginPage: React.FC = () => {
               Sign In
             </Button>
           </form>
+
+          {/* Spacer to push content down */}
+          <div className="flex-1" />
 
           {/* Divider */}
           <div className="relative my-8">
