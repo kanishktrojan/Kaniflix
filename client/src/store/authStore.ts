@@ -6,7 +6,8 @@ import type { User, LoginCredentials } from '@/types';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  isLoading: boolean; // For initial auth check only
+  isLoginPending: boolean; // For login/signup operations
   error: string | null;
 }
 
@@ -28,18 +29,19 @@ export const useAuthStore = create<AuthStore>()(
       // Initial state
       user: null,
       isAuthenticated: false,
-      isLoading: true,
+      isLoading: true, // Only for initial auth check
+      isLoginPending: false, // For login/signup operations
       error: null,
 
       // Actions
       login: async (credentials) => {
-        set({ isLoading: true, error: null });
+        set({ isLoginPending: true, error: null });
         try {
           const { user } = await authService.login(credentials);
-          set({ user, isAuthenticated: true, isLoading: false });
+          set({ user, isAuthenticated: true, isLoginPending: false });
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : 'Login failed';
-          set({ error: message, isLoading: false });
+          set({ error: message, isLoginPending: false });
           throw error;
         }
       },
