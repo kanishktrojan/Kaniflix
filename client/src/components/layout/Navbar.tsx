@@ -7,12 +7,20 @@ import { useAuthStore } from '@/store';
 import { useScrollPosition, useDebounce, useIsMobile } from '@/hooks';
 import logo from '@/assets/kaniflix_logo.png';
 
-const navLinks = [
+// Desktop navigation links (full)
+const desktopNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/movies', label: 'Movies' },
   { href: '/tv', label: 'TV Shows' },
   { href: '/sports', label: 'Sports' },
   { href: '/my-list', label: 'My List' },
+];
+
+// Mobile navigation links (simplified - only key content categories)
+const mobileNavLinks = [
+  { href: '/movies', label: 'Movies' },
+  { href: '/tv', label: 'TV Shows' },
+  { href: '/sports', label: 'Sports' },
 ];
 
 export const Navbar: React.FC = () => {
@@ -26,7 +34,6 @@ export const Navbar: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -61,7 +68,6 @@ export const Navbar: React.FC = () => {
 
   // Close menus on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
     setIsProfileMenuOpen(false);
     setIsSearchOpen(false);
     setSearchQuery('');
@@ -87,17 +93,46 @@ export const Navbar: React.FC = () => {
         paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
-      <nav className="flex items-center justify-between h-14 md:h-[68px] px-4 md:px-12 lg:px-16">
-        {/* Left Section */}
-        <div className="flex items-center gap-4 md:gap-10">
+      {/* Mobile Navigation Bar */}
+      <nav className="flex md:hidden items-center justify-between h-14 px-4">
+        {/* Logo */}
+        <Link to="/" className="flex-shrink-0">
+          <img src={logo} alt="KANIFLIX" className="h-6" />
+        </Link>
+
+        {/* Mobile Navigation Links */}
+        <ul className="flex items-center gap-6">
+          {mobileNavLinks.map((link) => (
+            <li key={link.href}>
+              <Link
+                to={link.href}
+                className={cn(
+                  'text-sm font-medium transition-colors whitespace-nowrap',
+                  location.pathname === link.href || 
+                  (link.href !== '/' && location.pathname.startsWith(link.href))
+                    ? 'text-white'
+                    : 'text-white/70 hover:text-white'
+                )}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Desktop Navigation Bar */}
+      <nav className="hidden md:flex items-center justify-between h-[68px] px-12 lg:px-16">
+        {/* Left Section - Logo and Navigation */}
+        <div className="flex items-center gap-10">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <img src={logo} alt="KANIFLIX" className="h-6 md:h-8" />
+            <img src={logo} alt="KANIFLIX" className="h-8" />
           </Link>
 
           {/* Desktop Navigation - Netflix style */}
-          <ul className="hidden lg:flex items-center gap-5">
-            {navLinks.map((link) => (
+          <ul className="flex items-center gap-5">
+            {desktopNavLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   to={link.href}
@@ -113,24 +148,10 @@ export const Navbar: React.FC = () => {
               </li>
             ))}
           </ul>
-
-          {/* Mobile Browse Dropdown */}
-          <div className="lg:hidden relative">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex items-center gap-1 text-sm font-medium py-2 px-1"
-            >
-              Browse
-              <ChevronDown className={cn(
-                'w-4 h-4 transition-transform',
-                isMobileMenuOpen && 'rotate-180'
-              )} />
-            </button>
-          </div>
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-3 md:gap-5">
+        {/* Right Section - Desktop only */}
+        <div className="flex items-center gap-5">
           {/* Search - Netflix style */}
           <div className="relative flex items-center">
             <AnimatePresence>
@@ -285,46 +306,6 @@ export const Navbar: React.FC = () => {
           )}
         </div>
       </nav>
-
-      {/* Mobile Menu - Netflix style dropdown */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <div 
-              className="fixed inset-0 bg-black/60 z-40 lg:hidden" 
-              onClick={() => setIsMobileMenuOpen(false)} 
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="lg:hidden absolute left-4 top-full mt-1 bg-black/95 border border-white/10 z-50"
-            >
-              {/* Arrow */}
-              <div className="absolute -top-2 left-8 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white/90" />
-              
-              <ul className="py-2 min-w-[200px]">
-                {navLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      className={cn(
-                        'block px-6 py-2.5 text-center text-[13px] hover:bg-white/5 transition-colors',
-                        location.pathname === link.href
-                          ? 'text-white font-medium'
-                          : 'text-white/70'
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </header>
   );
 };
