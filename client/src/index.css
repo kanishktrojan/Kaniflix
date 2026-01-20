@@ -498,3 +498,338 @@ body.modal-open:not(.kaniflix-modal) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================
+   PWA SPECIFIC STYLES
+   ======================================== */
+
+/* Standalone mode adjustments */
+@media (display-mode: standalone) {
+  /* Add padding for status bar */
+  .standalone-header {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Hide browser-specific UI elements */
+  .browser-only {
+    display: none !important;
+  }
+  
+  /* Ensure full height in standalone */
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iOS standalone mode */
+@media (display-mode: standalone) and (-webkit-device-pixel-ratio: 2),
+       (display-mode: standalone) and (-webkit-device-pixel-ratio: 3) {
+  /* iOS-specific standalone adjustments */
+  .navbar {
+    padding-top: max(env(safe-area-inset-top), 20px);
+  }
+}
+
+/* Bottom navigation safe area */
+.pb-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Mobile bottom nav height utility */
+.mb-bottom-nav {
+  margin-bottom: 72px;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mb-bottom-nav {
+    margin-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
+   MOBILE GESTURE STYLES
+   ======================================== */
+
+/* Swipe gesture indicator */
+.swipe-indicator {
+  position: absolute;
+  width: 36px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Touch feedback */
+.touch-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Disable touch callout on long press */
+.no-touch-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ========================================
+   MOBILE CAROUSEL STYLES
+   ======================================== */
+
+/* Touch-optimized horizontal scroll */
+.mobile-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.mobile-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-carousel > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Card sizes for mobile */
+@media (max-width: 639px) {
+  .mobile-carousel .card-item {
+    width: 120px;
+  }
+  
+  .mobile-carousel .card-item.large {
+    width: 160px;
+  }
+}
+
+/* ========================================
+   SKELETON LOADING ANIMATIONS
+   ======================================== */
+
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* Mobile-optimized skeleton cards */
+@media (max-width: 639px) {
+  .skeleton-card-mobile {
+    width: 120px;
+    aspect-ratio: 2/3;
+  }
+  
+  .skeleton-hero-mobile {
+    height: 50vh;
+  }
+}
+
+/* ========================================
+   MOBILE MODAL STYLES
+   ======================================== */
+
+/* Bottom sheet style modal for mobile */
+@media (max-width: 639px) {
+  .mobile-modal {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+  
+  .mobile-modal-content {
+    max-height: calc(90vh - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ========================================
+   MOBILE TYPOGRAPHY
+   ======================================== */
+
+@media (max-width: 639px) {
+  /* Slightly smaller text for mobile */
+  .text-mobile-sm {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+  
+  /* Ensure readability on small screens */
+  body {
+    font-size: 16px; /* Prevents zoom on input focus */
+  }
+  
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* ========================================
+   PULL TO REFRESH STYLES
+   ======================================== */
+
+.pull-refresh-container {
+  position: relative;
+  will-change: transform;
+}
+
+.pull-refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+}
+
+/* ========================================
+   MOBILE BUTTON STYLES
+   ======================================== */
+
+/* Touch-friendly button sizing */
+@media (max-width: 639px) {
+  .btn-mobile {
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+  
+  .btn-icon-mobile {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px;
+  }
+}
+
+/* Floating action button */
+.fab {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 40;
+}
+
+/* ========================================
+   MOBILE NAVIGATION STYLES
+   ======================================== */
+
+/* Bottom nav item */
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 48px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.bottom-nav-item.active {
+  color: var(--color-primary);
+}
+
+.bottom-nav-item .icon {
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav-item:active .icon {
+  transform: scale(0.9);
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU acceleration for smooth animations */
+.gpu-accelerate {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Optimize image rendering */
+img {
+  content-visibility: auto;
+}
+
+/* Lazy load off-screen content */
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* ========================================
+   DARK MODE SYSTEM PREFERENCE
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+/* Focus visible for touch devices */
+@media (hover: none) {
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn {
+    border: 2px solid currentColor;
+  }
+  
+  .card {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}

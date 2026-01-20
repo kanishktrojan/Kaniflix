@@ -3,7 +3,10 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
+import { MobileBottomNav } from './MobileBottomNav';
 import { cn } from '@/utils';
+import { useIsMobile, useIsTablet } from '@/hooks';
+import { useStandaloneMode } from '@/hooks/usePWA';
 import logo from '@/assets/kaniflix_logo.png';
 
 interface LayoutProps {
@@ -18,6 +21,10 @@ export const Layout: React.FC<LayoutProps> = ({
   className,
 }) => {
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isStandalone = useStandaloneMode();
+  const isMobileOrTablet = isMobile || isTablet;
   
   // Scroll to top on route change
   useEffect(() => {
@@ -43,8 +50,18 @@ export const Layout: React.FC<LayoutProps> = ({
   // All pages except home should have padding; detail pages handle their own hero overlap
   const shouldHavePadding = !isHomePage && !isDetailPage;
 
+  // Hide bottom nav on certain pages
+  const hideBottomNavPaths = ['/watch', '/login', '/signup', '/admin'];
+  const shouldShowBottomNav = !hideBottomNavPaths.some(path => 
+    location.pathname.startsWith(path)
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-background text-text">
+    <div className={cn(
+      'min-h-screen flex flex-col bg-background text-text',
+      // Add safe area padding for standalone PWA mode
+      isStandalone && 'pt-safe-top'
+    )}>
       {shouldShowNavbar && <Navbar />}
       
       <motion.main
@@ -56,6 +73,8 @@ export const Layout: React.FC<LayoutProps> = ({
         className={cn(
           'flex-1',
           shouldShowNavbar && shouldHavePadding && 'pt-16 md:pt-[68px]',
+          // Add bottom padding for mobile bottom nav
+          isMobileOrTablet && shouldShowBottomNav && 'pb-20',
           className
         )}
       >
@@ -63,6 +82,9 @@ export const Layout: React.FC<LayoutProps> = ({
       </motion.main>
 
       {shouldShowFooter && <Footer />}
+      
+      {/* Mobile bottom navigation - only on mobile/tablet */}
+      {shouldShowBottomNav && <MobileBottomNav />}
     </div>
   );
 };

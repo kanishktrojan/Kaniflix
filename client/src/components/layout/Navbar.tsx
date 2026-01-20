@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Bell, ChevronDown, X, User, Settings } from 'lucide-react';
 import { cn } from '@/utils';
 import { useAuthStore } from '@/store';
-import { useScrollPosition, useDebounce } from '@/hooks';
+import { useScrollPosition, useDebounce, useIsMobile } from '@/hooks';
 import logo from '@/assets/kaniflix_logo.png';
 
 const navLinks = [
@@ -20,6 +20,9 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const scrollPosition = useScrollPosition();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const isMobile = useIsMobile();
+  const lastScrollY = useRef(0);
+  const [isHidden, setIsHidden] = useState(false);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +31,26 @@ export const Navbar: React.FC = () => {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
   const isScrolled = scrollPosition > 10;
+
+  // Hide navbar on scroll down, show on scroll up (mobile only)
+  useEffect(() => {
+    if (!isMobile) {
+      setIsHidden(false);
+      return;
+    }
+
+    const currentScrollY = window.scrollY;
+    
+    if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+      // Scrolling down & past threshold
+      setIsHidden(true);
+    } else if (currentScrollY < lastScrollY.current) {
+      // Scrolling up
+      setIsHidden(false);
+    }
+    
+    lastScrollY.current = currentScrollY;
+  }, [scrollPosition, isMobile]);
 
   // Handle search
   useEffect(() => {
@@ -55,10 +78,16 @@ export const Navbar: React.FC = () => {
         'fixed top-0 left-0 right-0 z-navbar transition-all duration-500',
         isScrolled 
           ? 'bg-background/95 backdrop-blur-md shadow-lg' 
-          : 'bg-gradient-to-b from-black/90 via-black/60 to-transparent'
+          : 'bg-gradient-to-b from-black/90 via-black/60 to-transparent',
+        // Hide navbar on mobile when scrolling down
+        isHidden && 'transform -translate-y-full'
       )}
+      style={{
+        // Safe area for notched devices
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+      }}
     >
-      <nav className="flex items-center justify-between h-16 md:h-[68px] px-4 md:px-12 lg:px-16">
+      <nav className="flex items-center justify-between h-14 md:h-[68px] px-4 md:px-12 lg:px-16">
         {/* Left Section */}
         <div className="flex items-center gap-4 md:gap-10">
           {/* Logo */}

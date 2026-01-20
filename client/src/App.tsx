@@ -5,6 +5,8 @@ import { AnimatePresence } from 'framer-motion';
 import { AppRouter } from '@/router';
 import { useAuthStore } from '@/store';
 import { wakeUpBackend, startBackendKeepAlive, stopBackendKeepAlive } from '@/utils';
+import { PWANotifications, InstallPrompt, SplashScreen } from '@/components/ui';
+import { useStandaloneMode } from '@/hooks/usePWA';
 import logo from '@/assets/kaniflix_logo.png';
 
 // Wake up the backend immediately when app loads (for Render free tier)
@@ -26,6 +28,15 @@ const queryClient = new QueryClient({
 // Auth initializer component
 const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { checkAuth, isLoading, isAuthenticated } = useAuthStore();
+  const isStandalone = useStandaloneMode();
+  const [showSplash, setShowSplash] = React.useState(() => {
+    // Show splash screen on first load in standalone mode
+    if (typeof window !== 'undefined') {
+      const hasShown = sessionStorage.getItem('splash-shown');
+      return isStandalone && !hasShown;
+    }
+    return false;
+  });
 
   React.useEffect(() => {
     checkAuth();
@@ -44,6 +55,16 @@ const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
       stopBackendKeepAlive();
     };
   }, [isAuthenticated]);
+
+  const handleSplashComplete = React.useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem('splash-shown', 'true');
+  }, []);
+
+  // Show splash screen for PWA
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} minDuration={1500} />;
+  }
 
   if (isLoading) {
     return (
@@ -66,6 +87,9 @@ function App() {
         <AnimatePresence mode="wait">
           <AppRouter />
         </AnimatePresence>
+        {/* PWA Components */}
+        <PWANotifications />
+        <InstallPrompt />
       </AuthInitializer>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
