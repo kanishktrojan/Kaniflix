@@ -112,13 +112,13 @@ class App {
         console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🎬 KANIFLIX API Server                                  ║
-║                                                           ║
-║   Environment: ${config.NODE_ENV.padEnd(40)}║
-║   Port: ${String(config.PORT).padEnd(47)}║
-║   Client URL: ${config.CLIENT_URL.padEnd(41)}║
-║                                                           ║
-║   API Health: http://localhost:${config.PORT}/api/health           ║
+║   🎬 KANIFLIX API Server                                 
+║                                                           
+║   Environment: ${config.NODE_ENV.padEnd(40)}              
+║   Port: ${String(config.PORT).padEnd(47)}                 
+║   Client URL: ${config.CLIENT_URL.padEnd(41)}             
+║                                                           
+║   API Health: http://localhost:${config.PORT}/api/health  
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
         `);
