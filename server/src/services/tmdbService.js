@@ -4,22 +4,14 @@ const { cacheService, CACHE_TTL, CacheService } = require('../utils/cacheService
 const { ApiError } = require('../utils/apiHelpers');
 
 /**
- * Helper function to delay execution
- */
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
  * TMDB API Service
  * Handles all interactions with The Movie Database API
  */
 class TMDBService {
   constructor() {
-    this.maxRetries = 3;
-    this.retryDelay = 1000; // 1 second base delay
-    
     this.client = axios.create({
       baseURL: config.TMDB_BASE_URL,
-      timeout: 30000, // Increased to 30 seconds
+      timeout: 15000, // 15 seconds timeout
       params: {
         api_key: config.TMDB_API_KEY
       }
@@ -38,96 +30,41 @@ class TMDBService {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        // Don't transform errors here - let retry logic handle them
-        return Promise.reject(error);
+        const status = error.response?.status;
+        const errorMessage = error.response?.data?.status_message || error.message;
+        
+        console.error(`❌ TMDB Error: ${status || 'Network'} - ${errorMessage}`);
+        
+        if (status === 401) {
+          throw ApiError.internal('TMDB API key is invalid');
+        }
+        if (status === 404) {
+          throw ApiError.notFound('Content not found');
+        }
+        if (status === 429) {
+          throw ApiError.tooManyRequests('Rate limit exceeded. Please try again.');
+        }
+        if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+          throw ApiError.serviceUnavailable('TMDB request timed out.');
+        }
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+          throw ApiError.serviceUnavailable('Unable to connect to TMDB.');
+        }
+        
+        throw ApiError.serviceUnavailable(`TMDB error: ${errorMessage}`);
       }
     );
   }
 
   /**
-   * Make request with automatic retry on failure
-   */
-  async requestWithRetry(requestFn, retries = this.maxRetries) {
-    let lastError;
-    
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        return await requestFn();
-      } catch (error) {
-        lastError = error;
-        const status = error.response?.status;
-        const errorCode = error.code;
-        
-        // Don't retry on client errors (except rate limit)
-        if (status && status >= 400 && status < 500 && status !== 429) {
-          break;
-        }
-        
-        // Retry on network errors, timeouts, and rate limits
-        const isRetryable = 
-          status === 429 || 
-          errorCode === 'ECONNABORTED' || 
-          errorCode === 'ETIMEDOUT' ||
-          errorCode === 'ENOTFOUND' ||
-          errorCode === 'ECONNREFUSED' ||
-          errorCode === 'ECONNRESET' ||
-          !error.response; // Network error
-        
-        if (isRetryable && attempt < retries) {
-          const waitTime = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-          console.log(`⏳ TMDB retry ${attempt}/${retries} in ${waitTime}ms...`);
-          await delay(waitTime);
-          continue;
-        }
-        
-        break;
-      }
-    }
-    
-    // Transform error after all retries exhausted
-    return this.handleError(lastError);
-  }
-
-  /**
-   * Handle and transform errors
-   */
-  handleError(error) {
-    const status = error.response?.status;
-    const errorMessage = error.response?.data?.status_message || error.message;
-    
-    console.error(`❌ TMDB Error: ${status || 'Network'} - ${errorMessage}`);
-    
-    if (status === 401) {
-      throw ApiError.internal('TMDB API key is invalid');
-    }
-    if (status === 404) {
-      throw ApiError.notFound('Content not found');
-    }
-    if (status === 429) {
-      console.error('⚠️ TMDB Rate limit exceeded after retries');
-      throw ApiError.tooManyRequests('Rate limit exceeded. Please try again later.');
-    }
-    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      throw ApiError.serviceUnavailable('TMDB request timed out after retries. The service may be slow.');
-    }
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw ApiError.serviceUnavailable('Unable to connect to TMDB. Please check your internet connection.');
-    }
-    
-    throw ApiError.serviceUnavailable(`TMDB service error: ${errorMessage}`);
-  }
-
-  /**
-   * Generic cached fetch method with retry logic
+   * Generic cached fetch method
    */
   async cachedFetch(endpoint, params = {}, ttl = CACHE_TTL.MEDIUM) {
     const cacheKey = CacheService.generateTMDBKey(endpoint, params);
     
     return cacheService.getOrSet(cacheKey, async () => {
-      return this.requestWithRetry(async () => {
-        const response = await this.client.get(endpoint, { params });
-        return response.data;
-      });
+      const response = await this.client.get(endpoint, { params });
+      return response.data;
     }, ttl);
   }
 

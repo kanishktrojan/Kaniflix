@@ -94,14 +94,14 @@ export const Navbar: React.FC = () => {
       }}
     >
       {/* Mobile Navigation Bar */}
-      <nav className="flex md:hidden items-center justify-between h-14 px-4">
+      <nav className="flex md:hidden items-center h-14 px-4 gap-6">
         {/* Logo */}
-        <Link to="/" className="flex-shrink-0">
-          <img src={logo} alt="KANIFLIX" className="h-6" />
+        <Link to="/" className="flex-shrink-0 flex items-center">
+          <img src={logo} alt="KANIFLIX" className="h-5" />
         </Link>
 
-        {/* Mobile Navigation Links */}
-        <ul className="flex items-center gap-6">
+        {/* Mobile Navigation Links - right after logo */}
+        <ul className="flex items-center gap-5">
           {mobileNavLinks.map((link) => (
             <li key={link.href}>
               <Link
