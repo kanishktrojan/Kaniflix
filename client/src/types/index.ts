@@ -266,3 +266,305 @@ export interface UserStats {
   watchlistSize: number;
   preferredMediaType: MediaType;
 }
+
+// Admin Types
+export interface AdminUser extends User {
+  stats?: {
+    watchCount: number;
+    watchlistCount: number;
+  };
+}
+
+export interface AdminDashboardStats {
+  users: {
+    total: number;
+    active: number;
+    premium: number;
+    verified: number;
+    newThisMonth: number;
+  };
+  content: {
+    totalWatched: number;
+    completedWatches: number;
+    totalWatchlistItems: number;
+    recentActivity: number;
+  };
+  charts: {
+    userGrowth: Array<{
+      _id: { year: number; month: number };
+      count: number;
+    }>;
+    topContent: Array<{
+      tmdbId: number;
+      mediaType: MediaType;
+      title: string;
+      totalWatches: number;
+      uniqueViewers: number;
+    }>;
+    mediaDistribution: Array<{
+      _id: MediaType;
+      count: number;
+    }>;
+  };
+}
+
+export interface AdminUserDetails {
+  user: AdminUser;
+  watchHistory: WatchHistory[];
+  watchlist: WatchlistItem[];
+  stats: {
+    totalWatched: number;
+    completedWatches: number;
+    watchlistSize: number;
+    totalWatchTime: number;
+  };
+}
+
+export interface AdminAnalytics {
+  period: string;
+  dailyActiveUsers: Array<{
+    date: string;
+    activeUsers: number;
+  }>;
+  watchByHour: Array<{
+    _id: number;
+    count: number;
+  }>;
+  genrePopularity: Array<{
+    _id: MediaType;
+    count: number;
+    avgProgress: number;
+  }>;
+  registrations: Array<{
+    date: string;
+    registrations: number;
+  }>;
+}
+
+export interface AdminActivity {
+  recentWatches: Array<WatchHistory & {
+    user: {
+      _id: string;
+      username: string;
+      email: string;
+      avatar: string | null;
+    };
+  }>;
+  recentRegistrations: Array<{
+    _id: string;
+    username: string;
+    email: string;
+    avatar: string | null;
+    createdAt: string;
+  }>;
+}
+
+export interface PaginatedUsersResponse {
+  users: AdminUser[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+export interface UserFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: 'user' | 'premium' | 'admin' | '';
+  status?: 'active' | 'inactive' | '';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface BulkUpdateRequest {
+  userIds: string[];
+  updates: {
+    role?: 'user' | 'premium' | 'admin';
+    isActive?: boolean;
+    isEmailVerified?: boolean;
+  };
+}
+
+// ==================== SPORTS TYPES ====================
+
+export type SportCategory = 
+  | 'cricket'
+  | 'football'
+  | 'basketball'
+  | 'tennis'
+  | 'hockey'
+  | 'baseball'
+  | 'motorsport'
+  | 'mma'
+  | 'boxing'
+  | 'wrestling'
+  | 'golf'
+  | 'esports'
+  | 'olympics'
+  | 'other';
+
+export type SportsEventStatus = 'upcoming' | 'live' | 'ended' | 'cancelled';
+
+export interface SportsTeam {
+  name: string;
+  logo: string;
+  score: string;
+}
+
+export interface DRMConfig {
+  type: 'widevine' | 'clearkey' | 'fairplay';
+  licenseUrl: string;
+  clearkey: {
+    keyId: string;
+    key: string;
+  };
+}
+
+export interface QualityOption {
+  label: string;
+  url: string;
+}
+
+export interface SportsEvent {
+  _id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  banner: string | null;
+  category: SportCategory;
+  team1: SportsTeam;
+  team2: SportsTeam;
+  isLive: boolean;
+  status: SportsEventStatus;
+  scheduledAt: string;
+  endedAt: string | null;
+  streamUrl?: string;
+  drmEnabled: boolean;
+  drmConfig?: DRMConfig;
+  qualityOptions: QualityOption[];
+  venue: string;
+  tournament: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  viewCount: number;
+  createdBy?: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  updatedBy?: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SportsStreamInfo {
+  _id: string;
+  title: string;
+  streamUrl: string;
+  drmEnabled: boolean;
+  drmConfig?: DRMConfig;
+  qualityOptions: QualityOption[];
+}
+
+export interface SportsCategoryInfo {
+  id: SportCategory;
+  name: string;
+  icon: string;
+  count: number;
+}
+
+export interface SportsEventFilters {
+  page?: number;
+  limit?: number;
+  category?: SportCategory;
+  status?: SportsEventStatus;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  featured?: boolean;
+}
+
+export interface PaginatedSportsResponse {
+  events: SportsEvent[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+export interface SportsStats {
+  totalEvents: number;
+  liveEvents: number;
+  upcomingEvents: number;
+  endedEvents: number;
+  categoryStats: Array<{
+    _id: SportCategory;
+    count: number;
+  }>;
+  totalViews: number;
+}
+
+export interface CreateSportsEventRequest {
+  title: string;
+  description: string;
+  thumbnail: string;
+  banner?: string;
+  category: SportCategory;
+  team1?: Partial<SportsTeam>;
+  team2?: Partial<SportsTeam>;
+  isLive?: boolean;
+  status?: SportsEventStatus;
+  scheduledAt: string;
+  streamUrl: string;
+  drmEnabled?: boolean;
+  drmConfig?: Partial<DRMConfig>;
+  qualityOptions?: QualityOption[];
+  venue?: string;
+  tournament?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+}
+
+export interface UpdateSportsEventRequest extends Partial<CreateSportsEventRequest> {
+  endedAt?: string;
+}
+
+export interface BulkUpdateSportsRequest {
+  eventIds: string[];
+  updates: {
+    isActive?: boolean;
+    isFeatured?: boolean;
+    status?: SportsEventStatus;
+  };
+}
+
+// Rate Limit Settings Types
+export interface RateLimitCategorySettings {
+  enabled: boolean;
+  windowMs: number;
+  maxRequests: number;
+  skipPremium: boolean;
+  skipAdmin: boolean;
+}
+
+export interface RateLimitSettings {
+  general: RateLimitCategorySettings;
+  auth: RateLimitCategorySettings;
+  search: RateLimitCategorySettings;
+  stream: RateLimitCategorySettings;
+  sports: RateLimitCategorySettings;
+}
+
+export type RateLimitCategory = keyof RateLimitSettings;
+

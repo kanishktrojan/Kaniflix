@@ -11,6 +11,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/movies', label: 'Movies' },
   { href: '/tv', label: 'TV Shows' },
+  { href: '/sports', label: 'Sports' },
   { href: '/my-list', label: 'My List' },
 ];
 
@@ -222,6 +223,16 @@ export const Navbar: React.FC = () => {
                         <Settings className="w-4 h-4" />
                         Account
                       </Link>
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-primary hover:text-primary-hover hover:bg-white/5 transition-colors"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Admin Panel
+                        </Link>
+                      )}
                       <div className="border-t border-white/10 mt-2 pt-2">
                         <button
                           onClick={handleLogout}

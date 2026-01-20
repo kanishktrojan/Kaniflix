@@ -9,6 +9,7 @@ const config = require('./config');
 const database = require('./config/database');
 const routes = require('./routes');
 const { errorHandler, notFoundHandler, generalLimiter } = require('./middlewares');
+const { Settings } = require('./models');
 
 /**
  * KANIFLIX Server Application
@@ -102,6 +103,9 @@ class App {
     try {
       // Connect to database
       await database.connect();
+
+      // Initialize default settings
+      await Settings.initializeDefaults();
 
       // Start server
       this.app.listen(config.PORT, () => {

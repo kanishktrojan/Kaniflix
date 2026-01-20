@@ -4,7 +4,7 @@ import {
   RouterProvider,
   Navigate,
 } from 'react-router-dom';
-import { Layout } from '@/components/layout';
+import { Layout, AdminLayout } from '@/components/layout';
 import {
   HomePage,
   BrowsePage,
@@ -16,7 +16,17 @@ import {
   MyListPage,
   ProfilePage,
   NotFoundPage,
+  SportsPage,
+  SportsPlayerPage,
 } from '@/pages';
+import {
+  AdminDashboard,
+  AdminUsers,
+  AdminAnalytics,
+  AdminActivity,
+  AdminSports,
+  AdminSettings,
+} from '@/pages/admin';
 import { useAuthStore } from '@/store';
 
 // Protected Route Component
@@ -25,6 +35,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Admin Route Component
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
   
   return <>{children}</>;
@@ -95,6 +120,14 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'sports',
+        element: <SportsPage />,
+      },
+      {
+        path: 'sports/:id',
+        element: <SportsPlayerPage />,
+      },
     ],
   },
   {
@@ -112,6 +145,40 @@ const router = createBrowserRouter([
         <SignupPage />
       </GuestRoute>
     ),
+  },
+  {
+    path: '/admin',
+    element: (
+      <AdminRoute>
+        <AdminLayout />
+      </AdminRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'users',
+        element: <AdminUsers />,
+      },
+      {
+        path: 'sports',
+        element: <AdminSports />,
+      },
+      {
+        path: 'analytics',
+        element: <AdminAnalytics />,
+      },
+      {
+        path: 'activity',
+        element: <AdminActivity />,
+      },
+      {
+        path: 'settings',
+        element: <AdminSettings />,
+      },
+    ],
   },
   {
     path: '*',

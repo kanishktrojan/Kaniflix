@@ -7,6 +7,8 @@ const tvRoutes = require('./tv');
 const searchRoutes = require('./search');
 const streamRoutes = require('./stream');
 const userRoutes = require('./user');
+const adminRoutes = require('./admin');
+const sportsRoutes = require('./sports');
 
 /**
  * API Routes Index
@@ -30,5 +32,7 @@ router.use('/tv', tvRoutes);
 router.use('/search', searchRoutes);
 router.use('/stream', streamRoutes);
 router.use('/user', userRoutes);
+router.use('/admin', adminRoutes);
+router.use('/sports', sportsRoutes);
 
 module.exports = router;

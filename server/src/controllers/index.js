@@ -4,6 +4,7 @@ const tvController = require('./tvController');
 const searchController = require('./searchController');
 const streamController = require('./streamController');
 const userContentController = require('./userContentController');
+const adminController = require('./adminController');
 
 module.exports = {
   authController,
@@ -11,5 +12,6 @@ module.exports = {
   tvController,
   searchController,
   streamController,
-  userContentController
+  userContentController,
+  adminController
 };
