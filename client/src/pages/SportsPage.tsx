@@ -84,7 +84,7 @@ const HeroBannerSlideshow: React.FC<{
 }> = ({ events, onEventClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index);
