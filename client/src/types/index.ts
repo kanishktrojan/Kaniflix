@@ -443,6 +443,7 @@ export interface SportsEvent {
   scheduledAt: string;
   endedAt: string | null;
   streamUrl?: string;
+  useProxy: boolean;
   drmEnabled: boolean;
   drmConfig?: DRMConfig;
   qualityOptions: QualityOption[];
@@ -469,6 +470,7 @@ export interface SportsStreamInfo {
   _id: string;
   title: string;
   streamUrl: string;
+  useProxy: boolean;
   drmEnabled: boolean;
   drmConfig?: DRMConfig;
   qualityOptions: QualityOption[];
@@ -527,6 +529,7 @@ export interface CreateSportsEventRequest {
   status?: SportsEventStatus;
   scheduledAt: string;
   streamUrl: string;
+  useProxy?: boolean;
   drmEnabled?: boolean;
   drmConfig?: Partial<DRMConfig>;
   qualityOptions?: QualityOption[];

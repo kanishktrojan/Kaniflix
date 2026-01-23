@@ -6,4 +6,6 @@ export { userContentService } from './userContentService';
 export { progressService, queueBackendSync, getPendingSyncs, clearPendingSyncs } from './progressService';
 export { adminService } from './adminService';
 export { sportsService } from './sportsService';
+export { default as proxyService, getProxyUrl, getSignedProxyUrl, getJWPlayerConfig, checkProxyHealth } from './proxyService';
 export type { MediaProgress, EpisodeProgress, ContinueWatchingItem } from './progressService';
+export type { ProxyPlayerConfig } from './proxyService';

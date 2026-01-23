@@ -15,7 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useSportsStore, useAuthStore } from '@/store';
-import { sportsService } from '@/services';
+import { sportsService, getProxyUrl } from '@/services';
 import { cn } from '@/utils';
 import type { SportsStreamInfo } from '@/types';
 
@@ -217,9 +217,30 @@ const SportsPlayerPage: React.FC = () => {
       try {
         await loadJWPlayer();
 
-        // Build player config
+        // Determine the stream URL - use proxy if enabled
+        const streamUrl = streamInfo.useProxy 
+          ? getProxyUrl(streamInfo.streamUrl, { forceProxy: true })
+          : streamInfo.streamUrl;
+
+        // Detect stream type from original URL (before proxying)
+        const getStreamType = (url: string): string => {
+          const lowerUrl = url.toLowerCase();
+          if (lowerUrl.includes('.m3u8') || lowerUrl.includes('m3u8')) return 'hls';
+          if (lowerUrl.includes('.mpd')) return 'dash';
+          if (lowerUrl.includes('.mp4')) return 'mp4';
+          // Default to HLS for most live streams
+          return 'hls';
+        };
+        
+        const streamType = getStreamType(streamInfo.streamUrl);
+
+        // Build player config - use sources array to explicitly set type
         const config: JWPlayerConfig = {
-          file: streamInfo.streamUrl,
+          // Use sources instead of file to explicitly specify type
+          sources: [{
+            file: streamUrl,
+            type: streamType,
+          }],
           image: currentEvent?.thumbnail,
           title: streamInfo.title,
           width: '100%',
@@ -237,12 +258,12 @@ const SportsPlayerPage: React.FC = () => {
           },
         };
 
-        // Add quality options if available
+        // Add quality options if available (also proxy them if needed)
         if (streamInfo.qualityOptions && streamInfo.qualityOptions.length > 0) {
           config.sources = streamInfo.qualityOptions.map((q) => ({
-            file: q.url,
+            file: streamInfo.useProxy ? getProxyUrl(q.url, { forceProxy: true }) : q.url,
             label: q.label,
-            type: 'hls',
+            type: getStreamType(q.url), // Detect type for each quality option
           }));
         }
 

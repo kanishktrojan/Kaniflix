@@ -95,6 +95,12 @@ const sportsEventSchema = new mongoose.Schema(
       trim: true
     },
     
+    // Proxy Configuration - Route stream through proxy server
+    useProxy: {
+      type: Boolean,
+      default: false
+    },
+    
     // DRM Configuration (Optional)
     drmEnabled: {
       type: Boolean,

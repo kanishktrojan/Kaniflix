@@ -27,6 +27,7 @@ const createSportsEvent = asyncHandler(async (req, res) => {
     status,
     scheduledAt,
     streamUrl,
+    useProxy,
     drmEnabled,
     drmConfig,
     qualityOptions,
@@ -53,6 +54,7 @@ const createSportsEvent = asyncHandler(async (req, res) => {
     status: status || 'upcoming',
     scheduledAt: new Date(scheduledAt),
     streamUrl,
+    useProxy: useProxy || false,
     drmEnabled: drmEnabled || false,
     drmConfig: drmConfig || {},
     qualityOptions: qualityOptions || [],
@@ -167,7 +169,7 @@ const updateSportsEvent = asyncHandler(async (req, res) => {
   const allowedUpdates = [
     'title', 'description', 'thumbnail', 'banner', 'category',
     'team1', 'team2', 'isLive', 'status', 'scheduledAt', 'endedAt',
-    'streamUrl', 'drmEnabled', 'drmConfig', 'qualityOptions',
+    'streamUrl', 'useProxy', 'drmEnabled', 'drmConfig', 'qualityOptions',
     'venue', 'tournament', 'isActive', 'isFeatured'
   ];
 
@@ -343,15 +345,21 @@ const getAllSportsEvents = asyncHandler(async (req, res) => {
     featured
   } = req.query;
 
-  // Build query - only active events
-  const query = { isActive: true };
+  // Build query - only active events, exclude cancelled and ended
+  const query = { 
+    isActive: true,
+    status: { $nin: ['cancelled', 'ended'] }
+  };
 
   if (category) {
     query.category = category;
   }
 
   if (status) {
-    query.status = status;
+    // Only allow filtering by live or upcoming
+    if (['live', 'upcoming'].includes(status)) {
+      query.status = status;
+    }
   }
 
   if (featured === 'true') {
@@ -461,13 +469,18 @@ const getEventsByCategory = asyncHandler(async (req, res) => {
   const [events, totalCount] = await Promise.all([
     SportsEvent.find({
       category,
-      isActive: true
+      isActive: true,
+      status: { $nin: ['cancelled', 'ended'] }
     })
     .select('-drmConfig -streamUrl -createdBy -updatedBy')
     .sort({ isLive: -1, scheduledAt: -1 })
     .skip(skip)
     .limit(parseInt(limit)),
-    SportsEvent.countDocuments({ category, isActive: true })
+    SportsEvent.countDocuments({ 
+      category, 
+      isActive: true,
+      status: { $nin: ['cancelled', 'ended'] }
+    })
   ]);
 
   const totalPages = Math.ceil(totalCount / parseInt(limit));
@@ -529,6 +542,7 @@ const getStreamInfo = asyncHandler(async (req, res) => {
     _id: event._id,
     title: event.title,
     streamUrl: event.streamUrl,
+    useProxy: event.useProxy,
     drmEnabled: event.drmEnabled,
     qualityOptions: event.qualityOptions
   };
@@ -565,7 +579,7 @@ const getCategories = asyncHandler(async (req, res) => {
 
   // Get count for each category
   const categoryCounts = await SportsEvent.aggregate([
-    { $match: { isActive: true } },
+    { $match: { isActive: true, status: { $nin: ['cancelled', 'ended'] } } },
     { $group: { _id: '$category', count: { $sum: 1 } } }
   ]);
 

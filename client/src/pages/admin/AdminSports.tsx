@@ -17,6 +17,7 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
+  Shield,
 } from 'lucide-react';
 import { useSportsStore } from '@/store';
 import { StatCard, DataTable, type Column } from '@/components/admin';
@@ -63,6 +64,7 @@ interface FormData {
   status: SportsEventStatus;
   scheduledAt: string;
   streamUrl: string;
+  useProxy: boolean;
   drmEnabled: boolean;
   drmType: 'clearkey' | 'widevine' | 'fairplay';
   drmLicenseUrl: string;
@@ -89,6 +91,7 @@ const initialFormData: FormData = {
   status: 'upcoming',
   scheduledAt: '',
   streamUrl: '',
+  useProxy: false,
   drmEnabled: false,
   drmType: 'clearkey',
   drmLicenseUrl: '',
@@ -154,6 +157,7 @@ const AdminSports: React.FC = () => {
           ? new Date(editingEvent.scheduledAt).toISOString().slice(0, 16)
           : '',
         streamUrl: editingEvent.streamUrl || '',
+        useProxy: editingEvent.useProxy || false,
         drmEnabled: editingEvent.drmEnabled,
         drmType: editingEvent.drmConfig?.type || 'clearkey',
         drmLicenseUrl: editingEvent.drmConfig?.licenseUrl || '',
@@ -236,6 +240,7 @@ const AdminSports: React.FC = () => {
       isLive: formData.status === 'live',
       scheduledAt: formData.scheduledAt,
       streamUrl: formData.streamUrl,
+      useProxy: formData.useProxy,
       drmEnabled: formData.drmEnabled,
       drmConfig: formData.drmEnabled
         ? {
@@ -354,7 +359,16 @@ const AdminSports: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
-      render: (event) => getStatusBadge(event.status, event.isLive),
+      render: (event) => (
+        <div className="flex items-center gap-2">
+          {getStatusBadge(event.status, event.isLive)}
+          {event.useProxy && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30" title="Using Proxy">
+              <Shield className="w-3 h-3" />
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'scheduledAt',
@@ -928,6 +942,26 @@ const AdminSports: React.FC = () => {
                       className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
                       placeholder="https://example.com/stream.m3u8"
                     />
+                  </div>
+
+                  {/* Proxy Toggle */}
+                  <div className="p-4 bg-background/50 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="useProxy"
+                        name="useProxy"
+                        checked={formData.useProxy}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 accent-primary"
+                      />
+                      <label htmlFor="useProxy" className="text-white font-medium">
+                        Use Proxy Server
+                      </label>
+                    </div>
+                    <p className="text-xs text-text-secondary mt-2 ml-7">
+                      Route stream through proxy to bypass CORS restrictions. Enable this if the stream doesn't play due to cross-origin issues.
+                    </p>
                   </div>
 
                   {/* DRM Toggle */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -76,6 +76,227 @@ const LiveBadge: React.FC<{ pulse?: boolean }> = ({ pulse = true }) => (
     LIVE
   </span>
 );
+
+// Hero Banner Slideshow Component for Live Events
+const HeroBannerSlideshow: React.FC<{
+  events: SportsEvent[];
+  onEventClick: (id: string) => void;
+}> = ({ events, onEventClick }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const goToSlide = useCallback((index: number) => {
+    setCurrentIndex(index);
+  }, []);
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % events.length);
+  }, [events.length]);
+
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + events.length) % events.length);
+  }, [events.length]);
+
+  // Auto-advance timer
+  useEffect(() => {
+    if (events.length <= 1 || isPaused) return;
+
+    timerRef.current = setInterval(goToNext, 5000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [events.length, isPaused, goToNext]);
+
+  if (events.length === 0) return null;
+
+  const currentEvent = events[currentIndex];
+
+  return (
+    <div
+      className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Slides */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentEvent._id}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.5 }}
+          className="absolute inset-0 cursor-pointer"
+          onClick={() => onEventClick(currentEvent._id)}
+        >
+          <img
+            src={currentEvent.banner || currentEvent.thumbnail}
+            alt={currentEvent.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          
+          {/* Live Badge */}
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            {currentEvent.isLive && currentEvent.status === 'live' ? (
+              <LiveBadge />
+            ) : currentEvent.status === 'upcoming' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600 text-white text-sm font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                UPCOMING
+              </span>
+            ) : null}
+            {currentEvent.isFeatured && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-yellow-500/90 text-black text-xs font-bold">
+                <Star className="w-3 h-3 fill-current" />
+                FEATURED
+              </span>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+            <div className="flex items-center gap-2 text-text-secondary text-sm mb-3">
+              <span className="uppercase tracking-wider">{currentEvent.category}</span>
+              {currentEvent.tournament && (
+                <>
+                  <span>•</span>
+                  <span>{currentEvent.tournament}</span>
+                </>
+              )}
+            </div>
+
+            {/* Teams */}
+            {currentEvent.team1?.name && currentEvent.team2?.name ? (
+              <div className="flex items-center gap-4 md:gap-8 mb-4">
+                <div className="flex items-center gap-3">
+                  {currentEvent.team1.logo && (
+                    <img src={currentEvent.team1.logo} alt={currentEvent.team1.name} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                  )}
+                  <div>
+                    <p className="text-white font-bold text-xl md:text-2xl">{currentEvent.team1.name}</p>
+                    {currentEvent.isLive && currentEvent.team1.score && (
+                      <p className="text-2xl md:text-3xl font-bold text-primary">{currentEvent.team1.score}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-text-secondary text-xl font-medium">VS</div>
+                <div className="flex items-center gap-3">
+                  {currentEvent.team2.logo && (
+                    <img src={currentEvent.team2.logo} alt={currentEvent.team2.name} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                  )}
+                  <div>
+                    <p className="text-white font-bold text-xl md:text-2xl">{currentEvent.team2.name}</p>
+                    {currentEvent.isLive && currentEvent.team2.score && (
+                      <p className="text-2xl md:text-3xl font-bold text-primary">{currentEvent.team2.score}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">{currentEvent.title}</h2>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {currentEvent.status === 'upcoming' && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-text-secondary" />
+                  <span className="text-text-secondary">
+                    {new Date(currentEvent.scheduledAt).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                  <CountdownTimer targetDate={currentEvent.scheduledAt} />
+                </div>
+              )}
+              {currentEvent.venue && (
+                <div className="flex items-center gap-2 text-text-secondary">
+                  <MapPin className="w-4 h-4" />
+                  <span>{currentEvent.venue}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Watch Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              {currentEvent.isLive ? 'Watch Live' : 'View Details'}
+            </motion.button>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Navigation Arrows */}
+      {events.length > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              goToPrevious();
+            }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors z-10"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              goToNext();
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors z-10"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </>
+      )}
+
+      {/* Slide Indicators */}
+      {events.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+          {events.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(index);
+              }}
+              className={cn(
+                'transition-all duration-300',
+                index === currentIndex
+                  ? 'w-8 h-2 bg-primary rounded-full'
+                  : 'w-2 h-2 bg-white/50 hover:bg-white/80 rounded-full'
+              )}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Progress Bar */}
+      {events.length > 1 && !isPaused && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+          <motion.div
+            key={currentIndex}
+            initial={{ width: '0%' }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 5, ease: 'linear' }}
+            className="h-full bg-primary"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Sports Card Component
 const SportsCard: React.FC<{
@@ -510,20 +731,31 @@ const SportsPage: React.FC = () => {
     }
   };
 
-  // Featured Hero Event
-  const heroEvent = featuredEvents[0] || liveEvents[0];
+  // Combine live and featured events for hero slideshow
+  // Prioritize live events, then featured upcoming events
+  const heroEvents = [
+    ...liveEvents,
+    ...featuredEvents.filter(e => !liveEvents.some(l => l._id === e._id))
+  ].slice(0, 5);
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      {/* Hero Section */}
-      {heroEvent && (
+      {/* Hero Section - Slideshow for multiple live/featured events */}
+      {heroEvents.length > 0 && (
         <div className="relative">
           <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4">
-            <SportsCard
-              event={heroEvent}
-              variant="featured"
-              onClick={() => handleEventClick(heroEvent._id)}
-            />
+            {heroEvents.length > 1 ? (
+              <HeroBannerSlideshow
+                events={heroEvents}
+                onEventClick={handleEventClick}
+              />
+            ) : (
+              <SportsCard
+                event={heroEvents[0]}
+                variant="featured"
+                onClick={() => handleEventClick(heroEvents[0]._id)}
+              />
+            )}
           </div>
         </div>
       )}
