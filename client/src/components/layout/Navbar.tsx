@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, ChevronDown, X, User, Settings } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, Settings } from 'lucide-react';
 import { cn } from '@/utils';
 import { useAuthStore } from '@/store';
-import { useScrollPosition, useDebounce, useIsMobile } from '@/hooks';
+import { useScrollPosition, useIsMobile } from '@/hooks';
 import logo from '@/assets/kaniflix_logo.png';
 
 // Desktop navigation links (full)
@@ -31,12 +31,8 @@ export const Navbar: React.FC = () => {
   const isMobile = useIsMobile();
   const lastScrollY = useRef(0);
   const [isHidden, setIsHidden] = useState(false);
-
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
   const isScrolled = scrollPosition > 10;
 
   // Hide navbar on scroll down, show on scroll up (mobile only)
@@ -59,18 +55,9 @@ export const Navbar: React.FC = () => {
     lastScrollY.current = currentScrollY;
   }, [scrollPosition, isMobile]);
 
-  // Handle search
-  useEffect(() => {
-    if (debouncedSearch) {
-      navigate(`/search?q=${encodeURIComponent(debouncedSearch)}`);
-    }
-  }, [debouncedSearch, navigate]);
-
   // Close menus on route change
   useEffect(() => {
     setIsProfileMenuOpen(false);
-    setIsSearchOpen(false);
-    setSearchQuery('');
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -152,58 +139,13 @@ export const Navbar: React.FC = () => {
 
         {/* Right Section - Desktop only */}
         <div className="flex items-center gap-5">
-          {/* Search - Netflix style */}
-          <div className="relative flex items-center">
-            <AnimatePresence>
-              {isSearchOpen && (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 'auto', opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="absolute right-0 flex items-center bg-black/90 border border-white focus:border-white"
-                  style={{ transformOrigin: 'right' }}
-                >
-                  <Search className="w-4 h-4 ml-3 text-white/70" />
-                  <input
-                    type="text"
-                    placeholder="Titles, people, genres"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setIsSearchOpen(false);
-                        setSearchQuery('');
-                      }
-                    }}
-                    className="w-[200px] md:w-[280px] bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/40 border-none outline-none ring-0 focus:border-none focus:outline-none focus:ring-0"
-                    style={{ boxShadow: 'none' }}
-                    autoFocus
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="p-2 hover:bg-white/10 mr-1"
-                    >
-                      <X className="w-4 h-4 text-white/60" />
-                    </button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <button
-              onClick={() => {
-                if (isSearchOpen && !searchQuery) {
-                  setIsSearchOpen(false);
-                } else if (!isSearchOpen) {
-                  setIsSearchOpen(true);
-                }
-              }}
-              className="p-1.5 hover:text-text-secondary transition-colors relative z-10"
-            >
-              {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-            </button>
-          </div>
+          {/* Search - Direct link to search page */}
+          <Link
+            to="/search"
+            className="p-1.5 hover:text-text-secondary transition-colors"
+          >
+            <Search className="w-5 h-5" />
+          </Link>
 
           {/* Notifications */}
           {isAuthenticated && (
