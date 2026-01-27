@@ -311,16 +311,7 @@ const SportsPlayerPage: React.FC = () => {
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll for header effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Fetch event details
   useEffect(() => {
@@ -529,17 +520,9 @@ const SportsPlayerPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Premium Header with Glassmorphism */}
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-          isScrolled
-            ? 'bg-black/80 backdrop-blur-xl border-b border-white/10'
-            : 'bg-gradient-to-b from-black/80 via-black/40 to-transparent'
-        )}
-      >
-        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+      {/* Main Content */}
+      <main className="pt-5">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mb-4 flex items-center justify-between">
           <button
             onClick={() => navigate('/sports')}
             className="flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
@@ -549,23 +532,6 @@ const SportsPlayerPage: React.FC = () => {
             </div>
             <span className="hidden sm:inline font-medium">Back to Sports</span>
           </button>
-
-          {/* Center - Event Title (visible when scrolled) */}
-          <AnimatePresence>
-            {isScrolled && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="hidden md:flex items-center gap-3"
-              >
-                {isLive && <LiveBadge size="sm" />}
-                <span className="font-semibold text-white line-clamp-1 max-w-xs">
-                  {currentEvent.title}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           <div className="flex items-center gap-3">
             <motion.button
@@ -591,10 +557,8 @@ const SportsPlayerPage: React.FC = () => {
             </motion.button>
           </div>
         </div>
-      </motion.header>
 
-      {/* Main Content */}
-      <main className="pt-20">
+
         {/* Player Section with Premium Container */}
         <div className="max-w-screen-2xl mx-auto px-4 md:px-8">
           <div className="mb-6">
