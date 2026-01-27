@@ -14,8 +14,6 @@ import {
   AlertCircle,
   Play,
   Loader2,
-  Maximize2,
-  Volume2,
   Users,
   Zap,
 } from 'lucide-react';
@@ -286,7 +284,7 @@ const TeamCard: React.FC<{
 };
 
 // VS Divider with glow
-const VSDivider: React.FC<{ isLive?: boolean }> = ({ isLive }) => {
+const VSDivider: React.FC<{ isLive?: boolean }> = () => {
   return (
     <div className="px-3 md:px-6">
       <div className="bg-white/10 rounded-full px-3 py-2 md:px-4 md:py-3 border border-white/10">
