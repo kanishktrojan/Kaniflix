@@ -24,6 +24,8 @@
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "razorpay": "^2.9.6",
+    "ua-parser-js": "^2.0.8",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

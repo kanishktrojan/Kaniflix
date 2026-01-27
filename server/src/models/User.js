@@ -64,6 +64,89 @@ const userSchema = new mongoose.Schema(
       autoplayPreviews: {
         type: Boolean,
         default: true
+      },
+      // Playback preferences
+      defaultVideoQuality: {
+        type: String,
+        enum: ['auto', '360p', '480p', '720p', '1080p', '4k'],
+        default: 'auto'
+      },
+      dataSaverMode: {
+        type: Boolean,
+        default: false
+      },
+      // Audio preferences
+      defaultAudioLanguage: {
+        type: String,
+        default: 'en'
+      },
+      defaultSubtitleLanguage: {
+        type: String,
+        default: 'off'
+      },
+      subtitlesEnabled: {
+        type: Boolean,
+        default: false
+      }
+    },
+    // Notification preferences
+    notifications: {
+      email: {
+        newReleases: {
+          type: Boolean,
+          default: true
+        },
+        recommendations: {
+          type: Boolean,
+          default: true
+        },
+        accountUpdates: {
+          type: Boolean,
+          default: true
+        },
+        marketing: {
+          type: Boolean,
+          default: false
+        },
+        watchlistReminders: {
+          type: Boolean,
+          default: true
+        }
+      },
+      push: {
+        enabled: {
+          type: Boolean,
+          default: true
+        },
+        newEpisodes: {
+          type: Boolean,
+          default: true
+        },
+        continueWatching: {
+          type: Boolean,
+          default: true
+        }
+      }
+    },
+    // Profile customization
+    profile: {
+      bio: {
+        type: String,
+        maxlength: 200,
+        default: ''
+      },
+      favoriteGenres: [{
+        type: Number // Genre IDs
+      }],
+      profileLock: {
+        enabled: {
+          type: Boolean,
+          default: false
+        },
+        pin: {
+          type: String,
+          select: false
+        }
       }
     },
     refreshTokens: [{
@@ -85,6 +168,14 @@ const userSchema = new mongoose.Schema(
       default: 0
     },
     lockUntil: Date,
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false
+    },
+    twoFactorSecret: {
+      type: String,
+      select: false
+    },
     
     // ==================== EMBEDDED WATCHLIST ====================
     // Store only essential data, fetch rest from TMDB

@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/utils';
 
 interface BadgeProps {
-  variant?: 'default' | 'rating' | 'new' | 'hd' | 'genre';
+  variant?: 'default' | 'rating' | 'new' | 'hd' | 'genre' | 'secondary' | 'success' | 'warning' | 'danger';
   children: React.ReactNode;
   className?: string;
 }
@@ -13,6 +13,10 @@ const variants = {
   new: 'bg-primary text-white',
   hd: 'bg-surface border border-text-muted text-text-secondary',
   genre: 'bg-surface/50 text-text-secondary hover:bg-surface transition-colors',
+  secondary: 'bg-white/10 text-text-muted',
+  success: 'bg-green-500/20 text-green-400',
+  warning: 'bg-yellow-500/20 text-yellow-400',
+  danger: 'bg-red-500/20 text-red-400',
 };
 
 export const Badge: React.FC<BadgeProps> = ({

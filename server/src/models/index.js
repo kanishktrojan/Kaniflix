@@ -4,6 +4,10 @@ const Watchlist = require('./Watchlist');
 const OtpVerification = require('./OtpVerification');
 const SportsEvent = require('./SportsEvent');
 const Settings = require('./Settings');
+const { SubscriptionPlan, UserSubscription } = require('./Subscription');
+const CouponCode = require('./CouponCode');
+const DeviceSession = require('./DeviceSession');
+const RedeemCode = require('./RedeemCode');
 
 module.exports = {
   User,
@@ -11,5 +15,10 @@ module.exports = {
   Watchlist,
   OtpVerification,
   SportsEvent,
-  Settings
+  Settings,
+  SubscriptionPlan,
+  UserSubscription,
+  CouponCode,
+  DeviceSession,
+  RedeemCode
 };

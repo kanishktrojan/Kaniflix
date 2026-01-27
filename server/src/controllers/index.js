@@ -5,6 +5,8 @@ const searchController = require('./searchController');
 const streamController = require('./streamController');
 const userContentController = require('./userContentController');
 const adminController = require('./adminController');
+const paymentController = require('./paymentController');
+const profileController = require('./profileController');
 
 module.exports = {
   authController,
@@ -13,5 +15,7 @@ module.exports = {
   searchController,
   streamController,
   userContentController,
-  adminController
+  adminController,
+  paymentController,
+  profileController
 };

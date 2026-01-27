@@ -1,8 +1,9 @@
-const { User, OtpVerification } = require('../models');
+const { User, OtpVerification, DeviceSession } = require('../models');
 const TokenService = require('../utils/tokenService');
 const emailService = require('../utils/emailService');
 const { ApiError } = require('../utils/apiHelpers');
 const config = require('../config');
+const UAParser = require('ua-parser-js');
 
 /**
  * Authentication Service
@@ -73,7 +74,7 @@ class AuthService {
   /**
    * Verify OTP and complete registration
    */
-  async verifyOTPAndRegister(email, otp) {
+  async verifyOTPAndRegister(email, otp, metadata = {}) {
     // Find pending verification
     const pendingVerification = await OtpVerification.findOne({ email });
 
@@ -121,7 +122,10 @@ class AuthService {
     const tokens = TokenService.generateTokenPair(user);
 
     // Save refresh token
-    await this.saveRefreshToken(user._id, tokens.refreshToken);
+    await this.saveRefreshToken(user._id, tokens.refreshToken, metadata);
+
+    // Create device session for tracking
+    await this.createDeviceSession(user._id, metadata);
 
     return {
       user: user.toJSON(),
@@ -216,10 +220,72 @@ class AuthService {
     // Save refresh token with metadata
     await this.saveRefreshToken(user._id, tokens.refreshToken, metadata);
 
+    // Create device session for tracking
+    await this.createDeviceSession(user._id, metadata);
+
     return {
       user: user.toJSON(),
       tokens
     };
+  }
+
+  /**
+   * Create a device session for tracking
+   */
+  async createDeviceSession(userId, metadata = {}) {
+    try {
+      const { userAgent, ip } = metadata;
+      
+      // Parse user agent
+      const parser = new UAParser(userAgent);
+      const browser = parser.getBrowser();
+      const os = parser.getOS();
+      const device = parser.getDevice();
+
+      // Determine device type
+      let deviceType = 'desktop';
+      if (device.type === 'mobile') deviceType = 'mobile';
+      else if (device.type === 'tablet') deviceType = 'tablet';
+      else if (device.type === 'smarttv') deviceType = 'smart_tv';
+
+      // Check for existing session with same device fingerprint
+      const existingSession = await DeviceSession.findOne({
+        user: userId,
+        'deviceInfo.browser': browser.name || 'Unknown',
+        'deviceInfo.os': os.name || 'Unknown',
+        ipAddress: ip
+      });
+
+      if (existingSession) {
+        // Update existing session
+        existingSession.lastActive = new Date();
+        await existingSession.save();
+        return existingSession;
+      }
+
+      // Create new device session
+      const session = await DeviceSession.create({
+        user: userId,
+        deviceType,
+        deviceInfo: {
+          browser: browser.name || 'Unknown',
+          browserVersion: browser.version || '',
+          os: os.name || 'Unknown',
+          osVersion: os.version || '',
+          deviceModel: device.model || '',
+          deviceVendor: device.vendor || ''
+        },
+        ipAddress: ip || 'Unknown',
+        userAgent: userAgent || '',
+        lastActive: new Date()
+      });
+
+      return session;
+    } catch (error) {
+      // Don't fail login if device session creation fails
+      console.error('Failed to create device session:', error);
+      return null;
+    }
   }
 
   /**

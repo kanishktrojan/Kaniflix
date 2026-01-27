@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const sportsController = require('../controllers/sportsController');
+const subscriptionAdminController = require('../controllers/subscriptionAdminController');
 const { authenticate, authorize } = require('../middlewares/auth');
 
 /**
@@ -39,6 +40,34 @@ router.delete('/sports/:id', sportsController.deleteSportsEvent);
 router.patch('/sports/:id/toggle-live', sportsController.toggleLiveStatus);
 router.patch('/sports/:id/scores', sportsController.updateScores);
 router.post('/sports/bulk-update', sportsController.bulkUpdateSportsEvents);
+
+// Subscription Plans Management
+router.get('/subscriptions/stats', subscriptionAdminController.getSubscriptionStats);
+router.get('/subscriptions/plans', subscriptionAdminController.getAllPlans);
+router.post('/subscriptions/plans', subscriptionAdminController.createPlan);
+router.put('/subscriptions/plans/:id', subscriptionAdminController.updatePlan);
+router.delete('/subscriptions/plans/:id', subscriptionAdminController.deletePlan);
+
+// Coupon Codes Management
+router.get('/subscriptions/coupons', subscriptionAdminController.getAllCoupons);
+router.post('/subscriptions/coupons', subscriptionAdminController.createCoupon);
+router.put('/subscriptions/coupons/:id', subscriptionAdminController.updateCoupon);
+router.delete('/subscriptions/coupons/:id', subscriptionAdminController.deleteCoupon);
+router.get('/subscriptions/coupons/:id/usage', subscriptionAdminController.getCouponUsage);
+router.post('/subscriptions/coupons/bulk', subscriptionAdminController.bulkCreateCoupons);
+
+// Redeem Codes Management (Free Subscriptions - SEPARATE from Coupons)
+router.get('/subscriptions/redeem-codes', subscriptionAdminController.getAllRedeemCodes);
+router.post('/subscriptions/redeem-codes', subscriptionAdminController.createRedeemCode);
+router.put('/subscriptions/redeem-codes/:id', subscriptionAdminController.updateRedeemCode);
+router.delete('/subscriptions/redeem-codes/:id', subscriptionAdminController.deleteRedeemCode);
+router.get('/subscriptions/redeem-codes/:id/usage', subscriptionAdminController.getRedeemCodeUsage);
+router.post('/subscriptions/redeem-codes/bulk', subscriptionAdminController.bulkCreateRedeemCodes);
+
+// User Subscriptions Management
+router.get('/subscriptions/users/:userId', subscriptionAdminController.getUserSubscription);
+router.put('/subscriptions/users/:userId', subscriptionAdminController.updateUserSubscription);
+router.delete('/subscriptions/users/:userId', subscriptionAdminController.cancelUserSubscription);
 
 // Settings Management
 router.get('/settings/rate-limits', adminController.getRateLimitSettings);

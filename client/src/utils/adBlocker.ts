@@ -204,6 +204,23 @@ const isBlockedUrl = (url: string): boolean => {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase();
     
+    // ALWAYS allow these domains (payment gateways, our services, etc.)
+    const alwaysAllowedDomains = [
+      'razorpay.com',
+      'api.razorpay.com',
+      'checkout.razorpay.com',
+      'payments.razorpay.com',
+      'localhost',
+      '127.0.0.1',
+      window.location.hostname,
+    ];
+    
+    for (const domain of alwaysAllowedDomains) {
+      if (hostname.includes(domain) || hostname === domain) {
+        return false; // Never block these
+      }
+    }
+    
     // Check blocked domains
     for (const domain of BLOCKED_DOMAINS) {
       if (hostname.includes(domain)) {
@@ -285,10 +302,16 @@ export const initAdBlocker = (): void => {
         // Intercept src attribute setting
         const originalSetAttribute = element.setAttribute.bind(element);
         element.setAttribute = function(name: string, value: string) {
-          if (name === 'src' && isBlockedUrl(value)) {
-            blockedCount++;
-            console.log(`[AdBlocker] Blocked ${tagName} injection: ${value}`);
-            return;
+          if (name === 'src') {
+            // Always allow Razorpay
+            if (value.includes('razorpay.com') || value.includes('api.razorpay')) {
+              return originalSetAttribute(name, value);
+            }
+            if (isBlockedUrl(value)) {
+              blockedCount++;
+              console.log(`[AdBlocker] Blocked ${tagName} injection: ${value}`);
+              return;
+            }
           }
           return originalSetAttribute(name, value);
         };
@@ -296,6 +319,11 @@ export const initAdBlocker = (): void => {
         // Also intercept direct src assignment
         Object.defineProperty(element, 'src', {
           set: function(value: string) {
+            // Always allow Razorpay
+            if (value.includes('razorpay.com') || value.includes('api.razorpay')) {
+              originalSetAttribute('src', value);
+              return;
+            }
             if (isBlockedUrl(value)) {
               blockedCount++;
               console.log(`[AdBlocker] Blocked ${tagName} src: ${value}`);

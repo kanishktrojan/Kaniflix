@@ -26,6 +26,7 @@ import {
   AdminActivity,
   AdminSports,
   AdminSettings,
+  AdminSubscriptions,
 } from '@/pages/admin';
 import { useAuthStore } from '@/store';
 
@@ -177,6 +178,10 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: <AdminSettings />,
+      },
+      {
+        path: 'subscriptions',
+        element: <AdminSubscriptions />,
       },
     ],
   },

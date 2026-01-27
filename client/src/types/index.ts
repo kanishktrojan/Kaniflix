@@ -571,3 +571,305 @@ export interface RateLimitSettings {
 
 export type RateLimitCategory = keyof RateLimitSettings;
 
+// ==================== SUBSCRIPTION & PROFILE TYPES ====================
+
+// Subscription Plan
+export interface SubscriptionPlanFeature {
+  name: string;
+  included: boolean;
+  value?: string | null;
+}
+
+export interface SubscriptionPlanLimits {
+  maxStreams: number;
+  maxProfiles?: number;
+  maxDownloads: number;
+  videoQuality: string;
+  adsEnabled: boolean;
+}
+
+export interface SubscriptionPlan {
+  _id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  price: {
+    monthly: number;
+    yearly: number;
+    currency?: string;
+  };
+  features?: SubscriptionPlanFeature[];
+  limits?: SubscriptionPlanLimits;
+  badge?: string | {
+    text: string;
+    color: string;
+  };
+  sortOrder?: number;
+  isActive: boolean;
+  isPopular?: boolean;
+  subscriberCount?: number;
+}
+
+// User Subscription
+export interface PaymentMethod {
+  type: 'card' | 'upi' | 'paypal' | 'none';
+  last4?: string;
+  brand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+}
+
+export interface AppliedCoupon {
+  code: string;
+  discountAmount: number;
+  discountType: string;
+  appliedAt: string;
+  expiresAt: string;
+}
+
+export interface Invoice {
+  invoiceId: string;
+  amount: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'failed' | 'refunded';
+  paidAt: string;
+  description: string;
+}
+
+export interface UserSubscription {
+  _id: string;
+  user: string;
+  plan: SubscriptionPlan;
+  status: 'active' | 'cancelled' | 'expired' | 'paused' | 'trial';
+  billingCycle: 'monthly' | 'yearly';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  trialEnd?: string | null;
+  paymentMethod: PaymentMethod;
+  appliedCoupon?: AppliedCoupon;
+  invoices: Invoice[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Coupon Code
+export interface CouponCode {
+  _id: string;
+  code: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed' | 'trial_extension' | 'free_month';
+  discountValue: number;
+  currency?: string;
+  applicablePlans?: (SubscriptionPlan | string)[];
+  minPurchaseAmount?: number;
+  validFrom: string;
+  validUntil: string;
+  maxUses?: number | null;
+  maxUsesPerUser?: number;
+  currentUses: number;
+  firstTimeOnly?: boolean;
+  isActive: boolean;
+  campaign?: string;
+  createdBy?: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponUsage {
+  user: {
+    _id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+  };
+  usedAt: string;
+  orderId?: string;
+}
+
+// Redeem Code (Free Subscriptions - SEPARATE from Coupons)
+export interface RedeemCode {
+  _id: string;
+  code: string;
+  description?: string;
+  plan: SubscriptionPlan | string;
+  duration: {
+    value: number;
+    unit: 'day' | 'week' | 'month' | 'year';
+  };
+  validFrom: string;
+  validUntil: string;
+  maxUses?: number | null;
+  maxUsesPerUser?: number;
+  currentUses: number;
+  isActive: boolean;
+  usedBy?: {
+    user: string;
+    usedAt: string;
+    subscriptionId?: string;
+  }[];
+  createdBy?: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RedeemCodeUsage {
+  user: {
+    _id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+  };
+  usedAt: string;
+  subscriptionId?: string;
+}
+
+// Device Session
+export interface DeviceSession {
+  _id: string;
+  deviceId: string;
+  deviceName: string;
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'tv' | 'unknown';
+  browser: {
+    name: string;
+    version: string;
+  };
+  os: {
+    name: string;
+    version: string;
+  };
+  location: {
+    ip: string;
+    city?: string;
+    country?: string;
+    countryCode?: string;
+  };
+  isCurrentDevice: boolean;
+  lastActiveAt: string;
+  loginAt: string;
+  isStreaming: boolean;
+  currentlyWatching?: {
+    mediaType: string;
+    tmdbId: number;
+    title: string;
+    startedAt: string;
+  };
+  createdAt: string;
+}
+
+// Extended User Preferences
+export interface ExtendedUserPreferences {
+  language: string;
+  maturityRating: string;
+  autoplayNext: boolean;
+  autoplayPreviews: boolean;
+  defaultVideoQuality: 'auto' | '360p' | '480p' | '720p' | '1080p' | '4k';
+  dataSaverMode: boolean;
+  defaultAudioLanguage: string;
+  defaultSubtitleLanguage: string;
+  subtitlesEnabled: boolean;
+}
+
+export interface NotificationSettings {
+  email: {
+    newReleases: boolean;
+    recommendations: boolean;
+    accountUpdates: boolean;
+    marketing: boolean;
+    watchlistReminders: boolean;
+  };
+  push: {
+    enabled: boolean;
+    newEpisodes: boolean;
+    continueWatching: boolean;
+  };
+}
+
+export interface UserProfile {
+  bio: string;
+  favoriteGenres: number[];
+  profileLock: {
+    enabled: boolean;
+  };
+}
+
+// Profile Stats
+export interface ProfileStats {
+  totalWatched: number;
+  totalWatchTime: number;
+  totalWatchTimeFormatted: string;
+  completedMovies: number;
+  completedEpisodes: number;
+  inProgress: number;
+  watchlistSize: number;
+  movieWatchlistCount: number;
+  tvWatchlistCount: number;
+  memberSince: string;
+  lastActive: string;
+}
+
+// Extended User type for profile page
+export interface ExtendedUser extends User {
+  preferences: ExtendedUserPreferences;
+  notifications: NotificationSettings;
+  profile: UserProfile;
+}
+
+// Profile API Response
+export interface ProfileResponse {
+  user: ExtendedUser;
+  subscription: UserSubscription | null;
+  deviceCount: number;
+}
+
+// Subscription Stats (Admin)
+export interface SubscriptionStats {
+  totalSubscribers: number;
+  activeSubscriptions: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  activeTrials: number;
+  activeCoupons: number;
+  cancelledThisMonth: number;
+  overview?: {
+    totalUsers: number;
+    activeSubscriptions: number;
+    conversionRate: string;
+  };
+  planDistribution: Array<{
+    _id: string;
+    planId?: string;
+    name: string;
+    count: number;
+  }>;
+  revenueByPlan: Array<{
+    _id: string;
+    monthlyRevenue: number;
+    subscribers: number;
+  }>;
+  totalMonthlyRevenue?: number;
+}
+
+// Coupon Validation Response
+export interface CouponValidationResult {
+  valid: boolean;
+  reason?: string;
+}
+
+export interface RedeemCouponResponse {
+  message: string;
+  discount: {
+    code: string;
+    type: string;
+    value: number;
+    amount: number;
+  };
+}

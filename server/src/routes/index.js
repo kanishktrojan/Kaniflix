@@ -9,6 +9,8 @@ const streamRoutes = require('./stream');
 const userRoutes = require('./user');
 const adminRoutes = require('./admin');
 const sportsRoutes = require('./sports');
+const profileRoutes = require('./profile');
+const paymentRoutes = require('./payments');
 
 /**
  * API Routes Index
@@ -34,5 +36,7 @@ router.use('/stream', streamRoutes);
 router.use('/user', userRoutes);
 router.use('/admin', adminRoutes);
 router.use('/sports', sportsRoutes);
+router.use('/profile', profileRoutes);
+router.use('/payments', paymentRoutes);
 
 module.exports = router;

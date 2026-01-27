@@ -14,6 +14,7 @@ import {
   X,
   Trophy,
   Settings,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useAuthStore } from '@/store';
@@ -22,6 +23,7 @@ import logo from '@/assets/kaniflix_logo.png';
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { href: '/admin/sports', label: 'Sports', icon: Trophy },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity', icon: Activity },

@@ -343,28 +343,48 @@ ins.adsbygoogle {
   top: -9999px !important;
 }
 
-/* Block popup overlays */
-[class*="popup-overlay"],
+/* Block popup overlays - but allow Razorpay payment modal */
+[class*="popup-overlay"]:not([class*="razorpay"]),
 [class*="modal-ad"],
 [class*="interstitial"],
 [class*="preroll"],
 [class*="overlay-ad"],
-[id*="popup"],
-[id*="modal-ad"],
-div[style*="z-index: 9999"],
-div[style*="z-index: 99999"],
-div[style*="z-index: 999999"],
-div[style*="position: fixed"][style*="z-index"]:not(.video-modal):not(.modal):not([class*="player"]) {
+[id*="popup"]:not([id*="razorpay"]) {
   display: none !important;
 }
 
-/* Prevent iframe-based ads outside our player */
-iframe:not([src*="vidrock"]):not([src*="youtube"]):not([src*="vimeo"]):not([class*="player"]) {
+/* Prevent iframe-based ads outside our player - but allow Razorpay */
+iframe:not([src*="vidrock"]):not([src*="youtube"]):not([src*="vimeo"]):not([class*="player"]):not([src*="razorpay"]):not([class*="razorpay"]) {
   /* Don't completely hide as some might be legitimate, but limit their impact */
   max-width: 1px !important;
   max-height: 1px !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* Ensure body always has dark background */
+body {
+  background-color: #141414 !important;
+  min-height: 100vh;
+}
+
+html {
+  background-color: #141414 !important;
+}
+
+/* Allow Razorpay iframes and modals to display properly */
+.razorpay-container,
+.razorpay-backdrop,
+.razorpay-checkout-frame,
+iframe[src*="razorpay"],
+iframe[src*="api.razorpay"],
+div[class*="razorpay"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  pointer-events: auto !important;
 }
 
 /* Ensure our player iframe is always visible and hide scrollbars */

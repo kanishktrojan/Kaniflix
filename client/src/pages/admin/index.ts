@@ -4,3 +4,4 @@ export { default as AdminAnalytics } from './AdminAnalytics';
 export { default as AdminActivity } from './AdminActivity';
 export { default as AdminSports } from './AdminSports';
 export { default as AdminSettings } from './AdminSettings';
+export { default as AdminSubscriptions } from './AdminSubscriptions';

@@ -26,7 +26,12 @@ const authController = {
   verifyOTP: asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
     
-    const result = await authService.verifyOTPAndRegister(email, otp);
+    const metadata = {
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.connection.remoteAddress
+    };
+    
+    const result = await authService.verifyOTPAndRegister(email, otp, metadata);
     
     // Set cookies
     res.cookie('accessToken', result.tokens.accessToken, authService.getCookieOptions());
