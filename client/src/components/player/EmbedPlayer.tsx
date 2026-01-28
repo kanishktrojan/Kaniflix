@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils';
 
-// Vidrock.net base URL
-const VIDROCK_BASE_URL = 'https://vidrock.net';
+// Vidking.net base URL
+const VIDKING_BASE_URL = 'https://www.vidking.net';
 
-// Player event types from vidrock.net API
+// Player event types from vidking.net API
 export type PlayerEventType = 'play' | 'pause' | 'seeked' | 'ended' | 'timeupdate';
 
-// Event data structure from vidrock.net
+// Event data structure from vidking.net
 export interface PlayerEventData {
   event: PlayerEventType;
   currentTime: number;
@@ -17,9 +17,11 @@ export interface PlayerEventData {
   mediaType: 'movie' | 'tv';
   season?: number;
   episode?: number;
+  progress?: number; // Percentage progress
+  timestamp?: number; // Event timestamp
 }
 
-// Media data structure from vidrock.net (for continue watching)
+// Media data structure from vidking.net (for continue watching)
 export interface MediaProgressData {
   id: number;
   type: 'movie' | 'tv';
@@ -55,48 +57,53 @@ interface EmbedPlayerProps {
   onBack?: () => void;
   /** Called on every player event (play, pause, seeked, ended, timeupdate) */
   onPlayerEvent?: (event: PlayerEventData) => void;
-  /** Called when vidrock sends MEDIA_DATA with full progress info */
+  /** Called when vidking sends MEDIA_DATA with full progress info */
   onMediaData?: (data: MediaProgressData) => void;
   className?: string;
+  /** Start time in seconds for resume functionality */
+  startTime?: number;
 }
 
-// Build the embed URL according to vidrock.net documentation
+// Build the embed URL according to vidking.net documentation
 const buildEmbedUrl = (
   tmdbId: number,
   mediaType: 'movie' | 'tv',
   season?: number,
   episode?: number,
   options?: {
-    autoplay?: boolean;
-    autonext?: boolean;
-    theme?: string;
-    download?: boolean;
-    nextbutton?: boolean;
-    episodeselector?: boolean;
-    lang?: string;
-    muted?: boolean;
+    autoPlay?: boolean;
+    nextEpisode?: boolean;
+    episodeSelector?: boolean;
+    color?: string;
+    progress?: number; // Start time in seconds
   }
 ) => {
-  let url = VIDROCK_BASE_URL;
-  
+  let url = VIDKING_BASE_URL;
+
   if (mediaType === 'movie') {
-    url += `/movie/${tmdbId}`;
+    url += `/embed/movie/${tmdbId}`;
   } else {
-    url += `/tv/${tmdbId}/${season || 1}/${episode || 1}`;
+    url += `/embed/tv/${tmdbId}/${season || 1}/${episode || 1}`;
   }
-  
-  // Add query parameters
+
+  // Add query parameters according to vidking.net API
   const params = new URLSearchParams();
-  
-  if (options?.autoplay) params.append('autoplay', 'true');
-  if (options?.autonext) params.append('autonext', 'true');
-  if (options?.theme) params.append('theme', options.theme);
-  if (options?.download === false) params.append('download', 'false');
-  if (options?.nextbutton === false) params.append('nextbutton', 'false');
-  if (options?.episodeselector === false) params.append('episodeselector', 'false');
-  if (options?.lang) params.append('lang', options.lang);
-  if (options?.muted === false) params.append('muted', '0');
-  
+
+  // Primary color (hex without #) - using a Netflix-like red
+  if (options?.color) params.append('color', options.color);
+
+  // Auto-play feature
+  if (options?.autoPlay) params.append('autoPlay', 'true');
+
+  // Next episode button (TV only)
+  if (options?.nextEpisode && mediaType === 'tv') params.append('nextEpisode', 'true');
+
+  // Episode selection menu (TV only)
+  if (options?.episodeSelector && mediaType === 'tv') params.append('episodeSelector', 'true');
+
+  // Start time in seconds (for resume functionality)
+  if (options?.progress && options.progress > 0) params.append('progress', options.progress.toString());
+
   const queryString = params.toString();
   return queryString ? `${url}?${queryString}` : url;
 };
@@ -113,6 +120,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   onPlayerEvent,
   onMediaData,
   className,
+  startTime,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -131,16 +139,14 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
     clickTimestamps.current = [];
   }, [tmdbId, season, episode]);
 
-  // Build embed URL with default/white theme
-  // Note: We disable embedded player's episode selector since we have our own navigation
+  // Build embed URL with vidking.net parameters
+  // Using Netflix-like red color and enabling features for TV shows
   const embedUrl = buildEmbedUrl(tmdbId, mediaType, season, episode, {
-    autoplay: true,
-    autonext: mediaType === 'tv',
-    // No theme = default white theme
-    download: false,
-    nextbutton: false, // We have our own episode navigation
-    episodeselector: false, // We have our own episode selector
-    muted: false, // Start with audio enabled
+    autoPlay: true,
+    color: 'e50914', // Netflix-like red color (hex without #)
+    nextEpisode: mediaType === 'tv', // Show next episode button for TV
+    episodeSelector: false, // We have our own episode selector
+    progress: startTime, // Resume from saved position
   });
 
   // Block navigation attempts from iframe
@@ -180,8 +186,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
     // Prevent location changes via history API
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
+
+    history.pushState = function (...args) {
       const url = args[2]?.toString() || '';
       if (url.includes('tmll') || url.includes('rg4') || url.includes('.xyz') || url.includes('.top')) {
         console.log('[AdBlocker] Blocked pushState redirect:', url);
@@ -189,8 +195,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
       }
       return originalPushState.apply(history, args);
     };
-    
-    history.replaceState = function(...args) {
+
+    history.replaceState = function (...args) {
       const url = args[2]?.toString() || '';
       if (url.includes('tmll') || url.includes('rg4') || url.includes('.xyz') || url.includes('.top')) {
         console.log('[AdBlocker] Blocked replaceState redirect:', url);
@@ -211,14 +217,14 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   // Click shield: Block first few clicks which are usually ad-redirects
   const handleClickShield = useCallback((e: React.MouseEvent) => {
     const now = Date.now();
-    
+
     // Track click timestamps to detect rapid clicking
     clickTimestamps.current.push(now);
     // Keep only last 5 clicks
     if (clickTimestamps.current.length > 5) {
       clickTimestamps.current.shift();
     }
-    
+
     // Check for rapid clicking (more than 3 clicks in 2 seconds = suspicious)
     const recentClicks = clickTimestamps.current.filter(t => now - t < 2000);
     if (recentClicks.length > 3) {
@@ -243,38 +249,59 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setClickCount(prev => prev + 1);
-    
+
     // Immediately disable shield after first click
     setShieldActive(false);
     console.log('[AdBlocker] Shield disabled - player is now interactive');
   }, [clickCount]);
 
-  // Handle messages from the iframe (vidrock.net postMessage API)
+  // Handle messages from the iframe (vidking.net postMessage API)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Security: Only accept messages from vidrock.net
-      if (event.origin !== VIDROCK_BASE_URL) return;
+      // Security: Only accept messages from vidking.net
+      if (!event.origin.includes('vidking.net')) return;
 
-      // Handle MEDIA_DATA - full progress info for continue watching
-      if (event.data?.type === 'MEDIA_DATA') {
-        const mediaData = event.data.data as MediaProgressData;
-        if (onMediaData) {
-          onMediaData(mediaData);
+      // Parse the message data (vidking sends stringified JSON)
+      let messageData = event.data;
+      if (typeof event.data === 'string') {
+        try {
+          messageData = JSON.parse(event.data);
+        } catch {
+          return; // Invalid JSON, ignore
         }
       }
 
-      // Handle PLAYER_EVENT - granular playback events
-      if (event.data?.type === 'PLAYER_EVENT') {
-        const eventData = event.data.data as PlayerEventData;
-        if (onPlayerEvent) {
-          onPlayerEvent(eventData);
+      // Handle PLAYER_EVENT - granular playback events from vidking
+      // Event structure: { type: "PLAYER_EVENT", data: { event, currentTime, duration, progress, id, mediaType, season, episode, timestamp } }
+      if (messageData?.type === 'PLAYER_EVENT') {
+        const eventData = messageData.data;
+        if (onPlayerEvent && eventData) {
+          onPlayerEvent({
+            event: eventData.event,
+            currentTime: eventData.currentTime,
+            duration: eventData.duration,
+            tmdbId: parseInt(eventData.id) || tmdbId,
+            mediaType: eventData.mediaType || mediaType,
+            season: eventData.season,
+            episode: eventData.episode,
+            progress: eventData.progress,
+            timestamp: eventData.timestamp,
+          });
+        }
+      }
+
+      // Handle MEDIA_DATA - full progress info for continue watching
+      if (messageData?.type === 'MEDIA_DATA') {
+        const mediaData = messageData.data as MediaProgressData;
+        if (onMediaData) {
+          onMediaData(mediaData);
         }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onPlayerEvent, onMediaData]);
+  }, [tmdbId, mediaType, onPlayerEvent, onMediaData]);
 
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {
@@ -300,7 +327,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
   }, [onBack]);
 
   // Generate poster URL for loading state
-  const posterUrl = posterPath 
+  const posterUrl = posterPath
     ? `https://image.tmdb.org/t/p/w1280${posterPath}`
     : null;
 
@@ -323,7 +350,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
           >
             {/* Background poster blur */}
             {posterUrl && (
-              <div 
+              <div
                 className="absolute inset-0 opacity-30"
                 style={{
                   backgroundImage: `url(${posterUrl})`,
@@ -333,25 +360,25 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
                 }}
               />
             )}
-            
+
             {/* Loading content */}
             <div className="relative z-10 text-center px-6">
               {/* Spinner */}
               <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
-              
+
               {/* Title */}
               {title && (
                 <h2 className="text-2xl md:text-3xl font-bold mb-2">{title}</h2>
               )}
-              
+
               {/* Subtitle (episode info) */}
               {subtitle && (
                 <p className="text-lg text-white/70 mb-4">{subtitle}</p>
               )}
-              
+
               {/* Loading message */}
               <p className="text-white/50">
-                {mediaType === 'movie' 
+                {mediaType === 'movie'
                   ? 'Preparing your movie...'
                   : 'Loading episode...'}
               </p>
@@ -381,7 +408,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
         scrolling="no"
         allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
         referrerPolicy="no-referrer"
-        style={{ 
+        style={{
           border: 'none',
           overflow: 'hidden',
           scrollbarWidth: 'none',
@@ -390,13 +417,13 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({
       />
 
       {/* Invisible overlay to catch popup attempts at edges */}
-      <div 
-        className="absolute top-0 left-0 right-0 h-1 z-20" 
+      <div
+        className="absolute top-0 left-0 right-0 h-1 z-20"
         style={{ pointerEvents: 'auto' }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
       />
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-1 z-20" 
+      <div
+        className="absolute bottom-0 left-0 right-0 h-1 z-20"
         style={{ pointerEvents: 'auto' }}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
       />

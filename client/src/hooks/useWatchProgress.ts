@@ -5,7 +5,7 @@
  * 
  * Architecture:
  * ┌─────────────────────────────────────────────────────────────────┐
- * │                      VidRock iframe                             │
+ * │                      Vidking iframe                             │
  * │                          │                                      │
  * │        ┌─────────────────┼─────────────────┐                   │
  * │        │                 │                 │                   │
@@ -40,12 +40,12 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  progressService, 
+import {
+  progressService,
   queueBackendSync,
   COMPLETION_THRESHOLD,
   MIN_WATCH_TIME,
-  type MediaProgress 
+  type MediaProgress
 } from '@/services/progressService';
 import { userContentService } from '@/services';
 import { useAuthStore } from '@/store';
@@ -64,7 +64,7 @@ interface WatchProgressOptions {
   episodeNumber?: number;
 }
 
-/** Player event from VidRock */
+/** Player event from Vidking */
 interface PlayerEventData {
   event: 'play' | 'pause' | 'seeked' | 'ended' | 'timeupdate';
   currentTime: number;
@@ -87,9 +87,9 @@ export function useWatchProgress(options: WatchProgressOptions) {
   // Refs to track state without re-renders
   const hasMetMinWatchTime = useRef(false);
   const lastSyncedProgress = useRef<number>(0);
-  const currentProgress = useRef<{ currentTime: number; duration: number }>({ 
-    currentTime: 0, 
-    duration: 0 
+  const currentProgress = useRef<{ currentTime: number; duration: number }>({
+    currentTime: 0,
+    duration: 0
   });
   // Track current episode being watched (can change during playback)
   const currentEpisodeRef = useRef<{ season?: number; episode?: number }>({
@@ -108,8 +108,8 @@ export function useWatchProgress(options: WatchProgressOptions) {
   const syncToBackend = useMutation({
     mutationFn: async (data: { currentTime: number; duration: number }) => {
       if (!isAuthenticated) return;
-      
-      const progressPercent = data.duration > 0 
+
+      const progressPercent = data.duration > 0
         ? Math.floor((data.currentTime / data.duration) * 100)
         : 0;
 
@@ -133,15 +133,15 @@ export function useWatchProgress(options: WatchProgressOptions) {
   });
 
   // Backend sync with dynamic season/episode (used by player events)
-  const syncToBackendWithEpisode = useCallback(async (data: { 
-    currentTime: number; 
-    duration: number; 
-    season?: number; 
+  const syncToBackendWithEpisode = useCallback(async (data: {
+    currentTime: number;
+    duration: number;
+    season?: number;
     episode?: number;
   }) => {
     if (!isAuthenticated) return;
-    
-    const progressPercent = data.duration > 0 
+
+    const progressPercent = data.duration > 0
       ? Math.floor((data.currentTime / data.duration) * 100)
       : 0;
 
@@ -182,7 +182,7 @@ export function useWatchProgress(options: WatchProgressOptions) {
     const handleVisibilityChange = () => {
       if (document.hidden && hasMetMinWatchTime.current && currentProgress.current.duration > 0) {
         const { season, episode } = currentEpisodeRef.current;
-        
+
         // Save to localStorage immediately
         progressService.updateProgress({
           tmdbId,
@@ -195,7 +195,7 @@ export function useWatchProgress(options: WatchProgressOptions) {
           season,
           episode,
         });
-        
+
         // Sync to backend with current episode info
         if (isAuthenticated) {
           syncToBackendWithEpisode({
@@ -218,7 +218,7 @@ export function useWatchProgress(options: WatchProgressOptions) {
     const handleBeforeUnload = () => {
       if (hasMetMinWatchTime.current && currentProgress.current.duration > 0) {
         const { season, episode } = currentEpisodeRef.current;
-        
+
         // Save to localStorage (synchronous, will persist)
         progressService.updateProgress({
           tmdbId,
@@ -231,7 +231,7 @@ export function useWatchProgress(options: WatchProgressOptions) {
           season,
           episode,
         });
-        
+
         // Queue for next session sync (sendBeacon could be used here too)
         const progress = progressService.getProgress(tmdbId, mediaType);
         if (progress) {
@@ -249,18 +249,18 @@ export function useWatchProgress(options: WatchProgressOptions) {
   // ==========================================================================
   const handlePlayerEvent = useCallback((eventData: PlayerEventData) => {
     const { event, currentTime, duration, season, episode } = eventData;
-    
+
     // Use season/episode from event if available, otherwise fall back to options
     const currentSeason = season ?? seasonNumber;
     const currentEpisode = episode ?? episodeNumber;
-    
+
     // Update refs for use in visibility/beforeunload handlers
     currentProgress.current = { currentTime, duration };
     currentEpisodeRef.current = { season: currentSeason, episode: currentEpisode };
-    
+
     // Calculate progress percentage
     const progressPercent = duration > 0 ? currentTime / duration : 0;
-    
+
     // =======================================================================
     // RULE 1: Track minimum watch time (prevent accidental clicks)
     // =======================================================================
@@ -295,7 +295,7 @@ export function useWatchProgress(options: WatchProgressOptions) {
     // =======================================================================
     if (event === 'pause') {
       console.log('[WatchProgress] Paused - syncing to backend');
-      
+
       if (isAuthenticated) {
         syncToBackendWithEpisode({ currentTime, duration, season: currentSeason, episode: currentEpisode });
       }
@@ -307,10 +307,10 @@ export function useWatchProgress(options: WatchProgressOptions) {
     // =======================================================================
     if (event === 'ended' || progressPercent >= COMPLETION_THRESHOLD) {
       console.log('[WatchProgress] Content completed');
-      
+
       // Mark as completed in localStorage
       progressService.markCompleted(tmdbId, mediaType, currentSeason, currentEpisode);
-      
+
       // Sync to backend
       if (isAuthenticated) {
         syncToBackendWithEpisode({ currentTime, duration, season: currentSeason, episode: currentEpisode });
@@ -324,15 +324,15 @@ export function useWatchProgress(options: WatchProgressOptions) {
   // ==========================================================================
   const handleMediaData = useCallback((data: MediaProgress) => {
     console.log('[WatchProgress] Received MEDIA_DATA:', data);
-    
+
     // Update localStorage with full data from VidRock
     progressService.updateFromMediaData(data);
-    
+
     // Check if we should mark minimum watch time as met
     if (data.progress.watched >= MIN_WATCH_TIME) {
       hasMetMinWatchTime.current = true;
     }
-    
+
     // Update current progress ref
     currentProgress.current = {
       currentTime: data.progress.watched,
@@ -357,13 +357,13 @@ export function useWatchProgress(options: WatchProgressOptions) {
         season: seasonNumber,
         episode: episodeNumber,
       });
-      
+
       // Sync to backend
       if (isAuthenticated) {
         syncToBackend.mutate(currentProgress.current);
       }
     }
-    
+
     // Invalidate queries to refresh UI
     queryClient.invalidateQueries({ queryKey: ['continue-watching'] });
   }, [tmdbId, mediaType, title, posterPath, backdropPath, seasonNumber, episodeNumber, isAuthenticated, syncToBackend, queryClient]);

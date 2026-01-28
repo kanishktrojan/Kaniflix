@@ -187,7 +187,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Video Iframe (Vidrock embed) */}
+      {/* Video Iframe (Vidking embed) */}
       <iframe
         ref={iframeRef}
         src={src}

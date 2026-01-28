@@ -15,7 +15,7 @@
   --transition-fast: 150ms;
   --transition-normal: 300ms;
   --transition-slow: 500ms;
-  
+
   /* Mobile-first safe area insets */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -27,7 +27,8 @@
 @layer base {
   * {
     @apply border-surface;
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove tap highlight on mobile */
   }
 
   html {
@@ -103,34 +104,34 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px #2F2F2F inset !important; /* bg-surface color */
+    -webkit-box-shadow: 0 0 0 30px #2F2F2F inset !important;
+    /* bg-surface color */
     -webkit-text-fill-color: #FFFFFF !important;
     caret-color: #FFFFFF !important;
     transition: background-color 5000s ease-in-out 0s;
-    font-size: 1rem !important; /* 16px - matches input text size */
+    font-size: 1rem !important;
+    /* 16px - matches input text size */
     line-height: 1.5 !important;
   }
 }
 
 /* Component styles */
 @layer components {
+
   /* Container padding - Netflix style */
   .container-padding {
     @apply px-4 md:px-12 lg:px-16;
   }
-  
+
   /* Minimum touch target size for accessibility */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
-  
+
   /* Button base */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-md
-           transition-all duration-200 focus:outline-none focus-visible:ring-2 
-           focus-visible:ring-offset-2 focus-visible:ring-offset-background
-           disabled:opacity-50 disabled:cursor-not-allowed
-           min-h-[44px]; /* Touch-friendly minimum height */
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px];
+    /* Touch-friendly minimum height */
   }
 
   .btn-primary {
@@ -146,14 +147,12 @@
   }
 
   .btn-icon {
-    @apply p-2 rounded-full bg-background-secondary/80 backdrop-blur-sm
-           hover:bg-surface transition-colors duration-200;
+    @apply p-2 rounded-full bg-background-secondary/80 backdrop-blur-sm hover:bg-surface transition-colors duration-200;
   }
 
   /* Card styles */
   .card {
-    @apply relative overflow-hidden rounded-md bg-background-card
-           transition-transform duration-300 ease-out;
+    @apply relative overflow-hidden rounded-md bg-background-card transition-transform duration-300 ease-out;
   }
 
   .card-hover {
@@ -162,10 +161,7 @@
 
   /* Input styles */
   .input {
-    @apply w-full px-4 py-3 bg-surface text-text-primary rounded-md
-           border border-transparent focus:border-text-secondary
-           focus:outline-none transition-colors duration-200
-           placeholder:text-text-muted;
+    @apply w-full px-4 py-3 bg-surface text-text-primary rounded-md border border-transparent focus:border-text-secondary focus:outline-none transition-colors duration-200 placeholder:text-text-muted;
   }
 
   /* Gradient overlays */
@@ -182,18 +178,15 @@
   }
 
   .gradient-hero {
-    background: linear-gradient(
-      to right,
-      rgba(20, 20, 20, 1) 0%,
-      rgba(20, 20, 20, 0.7) 50%,
-      rgba(20, 20, 20, 0) 100%
-    );
+    background: linear-gradient(to right,
+        rgba(20, 20, 20, 1) 0%,
+        rgba(20, 20, 20, 0.7) 50%,
+        rgba(20, 20, 20, 0) 100%);
   }
 
   /* Skeleton loader */
   .skeleton {
-    @apply bg-gradient-to-r from-surface via-surface-hover to-surface
-           bg-[length:200%_100%] animate-shimmer rounded;
+    @apply bg-gradient-to-r from-surface via-surface-hover to-surface bg-[length:200%_100%] animate-shimmer rounded;
   }
 
   /* Text truncation */
@@ -220,19 +213,18 @@
 
   /* Rating badge */
   .rating-badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-warning/20 
-           text-warning text-xs font-semibold rounded;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-warning/20 text-warning text-xs font-semibold rounded;
   }
 
   /* Genre tag */
   .genre-tag {
-    @apply px-3 py-1 bg-surface text-text-secondary text-sm rounded-full
-           hover:bg-surface-hover transition-colors duration-200;
+    @apply px-3 py-1 bg-surface text-text-secondary text-sm rounded-full hover:bg-surface-hover transition-colors duration-200;
   }
 }
 
 /* Utility styles */
 @layer utilities {
+
   /* Safe area padding */
   .safe-top {
     padding-top: env(safe-area-inset-top);
@@ -279,6 +271,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -292,7 +285,8 @@
 /* Player iframe styles */
 .player-container {
   @apply relative w-full bg-black;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
+  padding-top: 56.25%;
+  /* 16:9 aspect ratio */
 }
 
 .player-container iframe {
@@ -353,8 +347,8 @@ ins.adsbygoogle {
   display: none !important;
 }
 
-/* Prevent iframe-based ads outside our player - but allow Razorpay */
-iframe:not([src*="vidrock"]):not([src*="youtube"]):not([src*="vimeo"]):not([class*="player"]):not([src*="razorpay"]):not([class*="razorpay"]) {
+/* Prevent iframe-based ads outside our player - but allow Razorpay and video players */
+iframe:not([src*="vidking"]):not([src*="vidrock"]):not([src*="youtube"]):not([src*="vimeo"]):not([class*="player"]):not([src*="razorpay"]):not([class*="razorpay"]) {
   /* Don't completely hide as some might be legitimate, but limit their impact */
   max-width: 1px !important;
   max-height: 1px !important;
@@ -388,6 +382,7 @@ div[class*="razorpay"] {
 }
 
 /* Ensure our player iframe is always visible and hide scrollbars */
+iframe[src*="vidking"],
 iframe[src*="vidrock"],
 iframe[src*="vidsrc"],
 .embed-player iframe {
@@ -401,11 +396,14 @@ iframe[src*="vidsrc"],
   left: 0 !important;
   top: 0 !important;
   overflow: hidden !important;
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE/Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE/Edge */
 }
 
 /* Hide scrollbars on iframe */
+iframe[src*="vidking"]::-webkit-scrollbar,
 iframe[src*="vidrock"]::-webkit-scrollbar,
 iframe[src*="vidsrc"]::-webkit-scrollbar,
 .embed-player iframe::-webkit-scrollbar {
@@ -448,28 +446,31 @@ body.modal-open:not(.kaniflix-modal) {
 
 /* Mobile touch optimizations */
 @media (max-width: 768px) {
+
   /* Larger touch targets on mobile */
-  button, a, [role="button"] {
+  button,
+  a,
+  [role="button"] {
     min-height: 44px;
   }
-  
+
   /* Prevent text size adjustment on orientation change */
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
-  
+
   /* Smooth momentum scrolling on iOS */
   .overflow-x-auto,
   .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Fix for iOS Safari 100vh issue */
   .min-h-screen {
     min-height: 100dvh;
   }
-  
+
   .h-screen {
     height: 100dvh;
   }
@@ -480,7 +481,7 @@ body.modal-open:not(.kaniflix-modal) {
   .video-modal {
     padding: 0;
   }
-  
+
   .video-modal-content {
     max-width: 100vw;
     width: 100vw;
@@ -494,15 +495,15 @@ body.modal-open:not(.kaniflix-modal) {
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .safe-area-left {
     padding-left: env(safe-area-inset-left);
   }
-  
+
   .safe-area-right {
     padding-right: env(safe-area-inset-right);
   }
@@ -510,6 +511,7 @@ body.modal-open:not(.kaniflix-modal) {
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -525,22 +527,25 @@ body.modal-open:not(.kaniflix-modal) {
 
 /* Standalone mode adjustments */
 @media (display-mode: standalone) {
+
   /* Add padding for status bar */
   .standalone-header {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   /* Hide browser-specific UI elements */
   .browser-only {
     display: none !important;
   }
-  
+
   /* Ensure full height in standalone */
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
     overflow: hidden;
   }
-  
+
   #root {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -549,7 +554,8 @@ body.modal-open:not(.kaniflix-modal) {
 
 /* iOS standalone mode */
 @media (display-mode: standalone) and (-webkit-device-pixel-ratio: 2),
-       (display-mode: standalone) and (-webkit-device-pixel-ratio: 3) {
+(display-mode: standalone) and (-webkit-device-pixel-ratio: 3) {
+
   /* iOS-specific standalone adjustments */
   .navbar {
     padding-top: max(env(safe-area-inset-top), 20px);
@@ -630,7 +636,7 @@ body.modal-open:not(.kaniflix-modal) {
   display: none;
 }
 
-.mobile-carousel > * {
+.mobile-carousel>* {
   scroll-snap-align: start;
   flex-shrink: 0;
 }
@@ -640,7 +646,7 @@ body.modal-open:not(.kaniflix-modal) {
   .mobile-carousel .card-item {
     width: 120px;
   }
-  
+
   .mobile-carousel .card-item.large {
     width: 160px;
   }
@@ -651,9 +657,12 @@ body.modal-open:not(.kaniflix-modal) {
    ======================================== */
 
 @keyframes skeletonPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -669,7 +678,7 @@ body.modal-open:not(.kaniflix-modal) {
     width: 120px;
     aspect-ratio: 2/3;
   }
-  
+
   .skeleton-hero-mobile {
     height: 50vh;
   }
@@ -690,7 +699,7 @@ body.modal-open:not(.kaniflix-modal) {
     border-radius: 16px 16px 0 0;
     overflow: hidden;
   }
-  
+
   .mobile-modal-content {
     max-height: calc(90vh - env(safe-area-inset-bottom));
     overflow-y: auto;
@@ -704,19 +713,24 @@ body.modal-open:not(.kaniflix-modal) {
    ======================================== */
 
 @media (max-width: 639px) {
+
   /* Slightly smaller text for mobile */
   .text-mobile-sm {
     font-size: 0.8125rem;
     line-height: 1.4;
   }
-  
+
   /* Ensure readability on small screens */
   body {
-    font-size: 16px; /* Prevents zoom on input focus */
+    font-size: 16px;
+    /* Prevents zoom on input focus */
   }
-  
-  input, select, textarea {
-    font-size: 16px !important; /* Prevents zoom on iOS */
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    /* Prevents zoom on iOS */
   }
 }
 
@@ -748,7 +762,7 @@ body.modal-open:not(.kaniflix-modal) {
     padding: 12px 20px;
     font-size: 1rem;
   }
-  
+
   .btn-icon-mobile {
     min-width: 48px;
     min-height: 48px;
@@ -848,7 +862,7 @@ img {
   .btn {
     border: 2px solid currentColor;
   }
-  
+
   .card {
     border: 1px solid rgba(255, 255, 255, 0.2);
   }

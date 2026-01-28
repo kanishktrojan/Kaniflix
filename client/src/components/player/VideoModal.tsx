@@ -171,7 +171,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     onPlayerEvent={onPlayerEvent}
                     onMediaData={onMediaData}
                   />
-                  
+
                   {/* Episode Navigation Overlay for TV Shows */}
                   {mediaType === 'tv' && seasonData?.episodes && (
                     <div className="absolute inset-0 pointer-events-none">
@@ -186,7 +186,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                           <ChevronLeft className="w-6 h-6" />
                         </button>
                       )}
-                      
+
                       {/* Next Episode Button */}
                       {canGoNext && (
                         <button
@@ -203,146 +203,146 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 </div>
               </div>
 
-            {/* Info Section Below Player */}
-            <div className="p-4 md:p-6 lg:p-8">
-              {/* Title Row */}
-              <div className="flex items-start justify-between gap-2 md:gap-4 mb-4">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 truncate">{title}</h2>
-                  {subtitle && (
-                    <p className="text-base text-white/70">{subtitle}</p>
-                  )}
-                </div>
-
-                {/* Episode Navigation for TV */}
-                {mediaType === 'tv' && seasonData?.episodes && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => navigateEpisode('prev')}
-                      disabled={!canGoPrev}
-                      className={cn(
-                        'p-1.5 rounded transition-colors',
-                        canGoPrev 
-                          ? 'hover:bg-white/10 text-white' 
-                          : 'text-white/20 cursor-not-allowed'
-                      )}
-                      title="Previous Episode"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    <span className="text-xs text-white/60 px-2">
-                      {episode}/{seasonData.episodes.length}
-                    </span>
-
-                    <button
-                      onClick={() => navigateEpisode('next')}
-                      disabled={!canGoNext}
-                      className={cn(
-                        'p-1.5 rounded transition-colors',
-                        canGoNext 
-                          ? 'hover:bg-white/10 text-white' 
-                          : 'text-white/20 cursor-not-allowed'
-                      )}
-                      title="Next Episode"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Episodes Section for TV */}
-              {mediaType === 'tv' && seasonData?.episodes && (
-                <div className="mt-6 border-t border-white/10 pt-6">
-                  {/* Season Selector & Episodes Toggle */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Episodes</h3>
-                    
-                    {/* Season Dropdown */}
-                    {seasons && seasons.length > 1 && (
-                      <div className="relative">
-                        <select
-                          value={displayedSeason}
-                          onChange={(e) => handleSeasonDropdownChange(Number(e.target.value))}
-                          className="appearance-none bg-[#242424] border border-white/20 rounded px-3 py-1.5 pr-8 text-sm cursor-pointer hover:border-white/40 transition-colors focus:outline-none focus:border-white/60"
-                        >
-                          {seasons
-                            .filter((s) => s.seasonNumber > 0)
-                            .map((s) => (
-                              <option key={s.seasonNumber} value={s.seasonNumber}>
-                                Season {s.seasonNumber}
-                              </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-white/60" />
-                      </div>
+              {/* Info Section Below Player */}
+              <div className="p-4 md:p-6 lg:p-8">
+                {/* Title Row */}
+                <div className="flex items-start justify-between gap-2 md:gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 truncate">{title}</h2>
+                    {subtitle && (
+                      <p className="text-base text-white/70">{subtitle}</p>
                     )}
                   </div>
 
-                  {/* Episode List - Scrollable */}
-                  <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                    {seasonData.episodes.map((ep) => (
+                  {/* Episode Navigation for TV */}
+                  {mediaType === 'tv' && seasonData?.episodes && (
+                    <div className="flex items-center gap-1">
                       <button
-                        key={ep.id}
-                        onClick={() => handleEpisodeClick(ep)}
+                        onClick={() => navigateEpisode('prev')}
+                        disabled={!canGoPrev}
                         className={cn(
-                          'w-full flex gap-3 p-2 md:p-3 rounded-md text-left transition-colors group',
-                          ep.episodeNumber === episode && season === displayedSeason
-                            ? 'bg-white/10'
-                            : 'hover:bg-white/5'
+                          'p-1.5 rounded transition-colors',
+                          canGoPrev
+                            ? 'hover:bg-white/10 text-white'
+                            : 'text-white/20 cursor-not-allowed'
                         )}
+                        title="Previous Episode"
                       >
-                        {/* Episode Thumbnail */}
-                        <div className="relative w-20 h-12 md:w-28 md:h-16 flex-shrink-0 rounded overflow-hidden bg-black/50">
-                          {ep.stillPath ? (
-                            <img
-                              src={getImageUrl(ep.stillPath, 'w300')}
-                              alt={ep.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white/30">
-                              <Play className="w-6 h-6" />
-                            </div>
-                          )}
-                          {/* Play icon overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-                              <Play className="w-4 h-4 text-black" fill="black" />
-                            </div>
-                          </div>
-                          {/* Current playing indicator */}
-                          {ep.episodeNumber === episode && season === displayedSeason && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                          )}
-                        </div>
-
-                        {/* Episode Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">
-                              {ep.episodeNumber}. {ep.name}
-                            </span>
-                          </div>
-                          {ep.runtime && (
-                            <div className="flex items-center gap-1 text-xs text-white/50 mb-1">
-                              <Clock className="w-3 h-3" />
-                              <span>{ep.runtime}m</span>
-                            </div>
-                          )}
-                          {ep.overview && (
-                            <p className="text-xs text-white/50 line-clamp-2">
-                              {ep.overview}
-                            </p>
-                          )}
-                        </div>
+                        <ChevronLeft className="w-5 h-5" />
                       </button>
-                    ))}
-                  </div>
+
+                      <span className="text-xs text-white/60 px-2">
+                        {episode}/{seasonData.episodes.length}
+                      </span>
+
+                      <button
+                        onClick={() => navigateEpisode('next')}
+                        disabled={!canGoNext}
+                        className={cn(
+                          'p-1.5 rounded transition-colors',
+                          canGoNext
+                            ? 'hover:bg-white/10 text-white'
+                            : 'text-white/20 cursor-not-allowed'
+                        )}
+                        title="Next Episode"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Episodes Section for TV */}
+                {mediaType === 'tv' && seasonData?.episodes && (
+                  <div className="mt-6 border-t border-white/10 pt-6">
+                    {/* Season Selector & Episodes Toggle */}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Episodes</h3>
+
+                      {/* Season Dropdown */}
+                      {seasons && seasons.length > 1 && (
+                        <div className="relative">
+                          <select
+                            value={displayedSeason}
+                            onChange={(e) => handleSeasonDropdownChange(Number(e.target.value))}
+                            className="appearance-none bg-[#242424] border border-white/20 rounded px-3 py-1.5 pr-8 text-sm cursor-pointer hover:border-white/40 transition-colors focus:outline-none focus:border-white/60"
+                          >
+                            {seasons
+                              .filter((s) => s.seasonNumber > 0)
+                              .map((s) => (
+                                <option key={s.seasonNumber} value={s.seasonNumber}>
+                                  Season {s.seasonNumber}
+                                </option>
+                              ))}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-white/60" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Episode List - Scrollable */}
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                      {seasonData.episodes.map((ep) => (
+                        <button
+                          key={ep.id}
+                          onClick={() => handleEpisodeClick(ep)}
+                          className={cn(
+                            'w-full flex gap-3 p-2 md:p-3 rounded-md text-left transition-colors group',
+                            ep.episodeNumber === episode && season === displayedSeason
+                              ? 'bg-white/10'
+                              : 'hover:bg-white/5'
+                          )}
+                        >
+                          {/* Episode Thumbnail */}
+                          <div className="relative w-20 h-12 md:w-28 md:h-16 flex-shrink-0 rounded overflow-hidden bg-black/50">
+                            {ep.stillPath ? (
+                              <img
+                                src={getImageUrl(ep.stillPath, 'w300')}
+                                alt={ep.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white/30">
+                                <Play className="w-6 h-6" />
+                              </div>
+                            )}
+                            {/* Play icon overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+                                <Play className="w-4 h-4 text-black" fill="black" />
+                              </div>
+                            </div>
+                            {/* Current playing indicator */}
+                            {ep.episodeNumber === episode && season === displayedSeason && (
+                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                            )}
+                          </div>
+
+                          {/* Episode Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium">
+                                {ep.episodeNumber}. {ep.name}
+                              </span>
+                            </div>
+                            {ep.runtime && (
+                              <div className="flex items-center gap-1 text-xs text-white/50 mb-1">
+                                <Clock className="w-3 h-3" />
+                                <span>{ep.runtime}m</span>
+                              </div>
+                            )}
+                            {ep.overview && (
+                              <p className="text-xs text-white/50 line-clamp-2">
+                                {ep.overview}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </motion.div>
