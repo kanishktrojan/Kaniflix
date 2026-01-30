@@ -7,6 +7,7 @@ import type { MediaItem } from '@/types';
 
 interface HeroBannerProps {
   item: MediaItem;
+  logoPath?: string | null; // TMDB logo URL
   onPlay?: () => void;
   onInfo?: () => void;
   className?: string;
@@ -14,13 +15,20 @@ interface HeroBannerProps {
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   item,
+  logoPath,
   onPlay,
   onInfo,
   className,
 }) => {
   const navigate = useNavigate();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+
+  // Reset logo error when logoPath changes
+  React.useEffect(() => {
+    setLogoError(false);
+  }, [logoPath]);
 
   const mediaType = item.mediaType || (item.title ? 'movie' : 'tv');
 
@@ -53,7 +61,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           onLoad={() => setImageLoaded(true)}
           className="w-full h-full object-cover object-top"
         />
-        
+
         {/* Loading state */}
         {!imageLoaded && (
           <div className="absolute inset-0 bg-background animate-pulse" />
@@ -61,7 +69,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       </div>
 
       {/* Netflix-style gradient overlay - bottom fade */}
-      <div 
+      <div
         className="absolute bottom-0 left-0 right-0 h-[40%]"
         style={{
           background: 'linear-gradient(to top, rgb(20, 20, 20) 0%, rgba(20, 20, 20, 0.7) 50%, transparent 100%)'
@@ -69,7 +77,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       />
 
       {/* Netflix-style gradient overlay - left side for content readability */}
-      <div 
+      <div
         className="absolute inset-0"
         style={{
           background: 'linear-gradient(to right, rgba(20, 20, 20, 0.9) 0%, rgba(20, 20, 20, 0.6) 25%, transparent 50%)'
@@ -77,7 +85,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       />
 
       {/* Vignette effect */}
-      <div 
+      <div
         className="absolute inset-0"
         style={{
           background: 'radial-gradient(ellipse 80% 50% at 50% 0%, transparent 50%, rgba(20, 20, 20, 0.3) 100%)'
@@ -86,7 +94,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
       {/* Content Container - Netflix positions content in bottom-left */}
       <div className="absolute bottom-[35%] left-0 right-0 px-4 md:px-12 lg:px-16">
-        <motion.div 
+        <motion.div
           className="max-w-lg lg:max-w-xl space-y-4"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -105,18 +113,30 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </span>
           </motion.div>
 
-          {/* Title - Netflix style large title */}
-          <motion.h1
+          {/* Title - Logo or Text (prioritize logo with fallback) */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight"
-            style={{
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-            }}
           >
-            {item.title}
-          </motion.h1>
+            {logoPath && !logoError ? (
+              <img
+                src={logoPath}
+                alt={item.title}
+                className="max-h-20 md:max-h-28 lg:max-h-36 w-auto object-contain drop-shadow-2xl"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <h1
+                className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight"
+                style={{
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                }}
+              >
+                {item.title}
+              </h1>
+            )}
+          </motion.div>
 
           {/* Description - Netflix shows this on hover/featured */}
           <motion.p

@@ -28,13 +28,13 @@ const HomePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
   const [featuredIndex, setFeaturedIndex] = useState(0);
-  
+
   // Video modal state
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [playingItem, setPlayingItem] = useState<MediaItem | null>(null);
   const [playingSeason, setPlayingSeason] = useState<number | undefined>();
   const [playingEpisode, setPlayingEpisode] = useState<number | undefined>();
-  
+
   // State to trigger re-computation of local continue watching
   const [localCWVersion, setLocalCWVersion] = useState(0);
 
@@ -57,7 +57,7 @@ const HomePage: React.FC = () => {
   // Primary: localStorage (instant, offline-capable)
   // Secondary: Backend (cross-device sync for authenticated users)
   // ==========================================================================
-  
+
   // Get local continue watching instantly
   const localContinueWatching = useMemo(() => {
     return progressService.getContinueWatching(20);
@@ -83,11 +83,11 @@ const HomePage: React.FC = () => {
   // Local data has poster/backdrop from VidRock's MEDIA_DATA
   // Backend data might have different items (from other devices)
   // ==========================================================================
-  
+
   // Merge local and backend continue watching (deduplicated, most recent wins)
   const mergedContinueWatching = useMemo(() => {
     const itemMap = new Map<string, any>();
-    
+
     // Add local items first (these have poster/backdrop from VidRock)
     localContinueWatching.forEach(item => {
       const key = `${item.type}-${item.id}`;
@@ -103,13 +103,13 @@ const HomePage: React.FC = () => {
         lastUpdated: item.lastUpdated,
       });
     });
-    
+
     // Merge backend items (for cross-device sync)
     if (backendContinueWatchingRaw) {
       backendContinueWatchingRaw.forEach((item: MinimalHistoryItem) => {
         const key = `${item.mediaType}-${item.tmdbId}`;
         const existing = itemMap.get(key);
-        
+
         // Only add/update if backend is more recent or doesn't exist locally
         if (!existing) {
           itemMap.set(key, {
@@ -126,7 +126,7 @@ const HomePage: React.FC = () => {
         }
       });
     }
-    
+
     return Array.from(itemMap.values());
   }, [localContinueWatching, backendContinueWatchingRaw]);
 
@@ -135,20 +135,20 @@ const HomePage: React.FC = () => {
     queryKey: ['continue-watching-enriched', mergedContinueWatching],
     queryFn: async () => {
       if (mergedContinueWatching.length === 0) return [];
-      
+
       const enriched = await Promise.all(
         mergedContinueWatching.map(async (item: any) => {
           // If we already have title (from localStorage), no need to fetch
           if (item.title) {
             return item;
           }
-          
+
           // Fetch TMDB data for items without metadata
           try {
             const details: any = item.mediaType === 'movie'
               ? await tmdbService.getMovieDetails(item.tmdbId)
               : await tmdbService.getTVDetails(item.tmdbId);
-            
+
             return {
               ...item,
               title: details.title || 'Unknown',
@@ -179,14 +179,14 @@ const HomePage: React.FC = () => {
     queryFn: async () => {
       const items = watchlistRaw?.results || [];
       if (items.length === 0) return { results: [] };
-      
+
       const enriched = await Promise.all(
         items.map(async (item: MinimalWatchlistItem) => {
           try {
             const details: any = item.mediaType === 'movie'
               ? await tmdbService.getMovieDetails(item.tmdbId)
               : await tmdbService.getTVDetails(item.tmdbId);
-            
+
             return {
               ...item,
               title: details.title || 'Unknown',
@@ -323,9 +323,27 @@ const HomePage: React.FC = () => {
   // Featured content for hero - rotate every 10 seconds
   const featuredContent = heroItems[featuredIndex];
 
+  // Fetch logo for featured content (details endpoint includes logoPath)
+  const { data: featuredDetails } = useQuery({
+    queryKey: ['featured-details', featuredContent?.id, featuredContent?.mediaType],
+    queryFn: async (): Promise<{ logoPath?: string | null } | null> => {
+      if (!featuredContent) return null;
+      const mediaType = featuredContent.mediaType || (featuredContent.title ? 'movie' : 'tv');
+      const details = mediaType === 'movie'
+        ? await tmdbService.getMovieDetails(featuredContent.id)
+        : await tmdbService.getTVDetails(featuredContent.id);
+      return details as { logoPath?: string | null };
+    },
+    enabled: !!featuredContent?.id,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+  });
+
+  // Get logo path from featured details
+  const featuredLogoPath = featuredDetails?.logoPath || null;
+
   useEffect(() => {
     if (heroItems.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setFeaturedIndex((prev) => (prev + 1) % heroItems.length);
     }, 10000);
@@ -379,15 +397,15 @@ const HomePage: React.FC = () => {
   const handleRemoveFromContinueWatching = useCallback((item: MediaItem) => {
     // Remove from localStorage (instant update)
     progressService.removeProgress(item.id, item.mediaType);
-    
+
     // Trigger immediate UI update by incrementing version
     setLocalCWVersion(v => v + 1);
-    
+
     // Remove from backend (async, non-blocking)
     if (isAuthenticated) {
       removeFromHistoryMutation.mutate({ tmdbId: item.id, mediaType: item.mediaType });
     }
-    
+
     // Also invalidate backend queries for consistency
     queryClient.invalidateQueries({ queryKey: ['continue-watching-backend'] });
     queryClient.invalidateQueries({ queryKey: ['continue-watching-enriched'] });
@@ -419,6 +437,7 @@ const HomePage: React.FC = () => {
         ) : featuredContent ? (
           <HeroBanner
             item={featuredContent}
+            logoPath={featuredLogoPath}
             onPlay={() => handlePlay(featuredContent)}
             onInfo={() => handleInfo(featuredContent)}
           />
@@ -431,9 +450,8 @@ const HomePage: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setFeaturedIndex(idx)}
-                className={`w-1 h-4 rounded-sm transition-all duration-300 ${
-                  idx === featuredIndex ? 'bg-white' : 'bg-gray-600'
-                }`}
+                className={`w-1 h-4 rounded-sm transition-all duration-300 ${idx === featuredIndex ? 'bg-white' : 'bg-gray-600'
+                  }`}
               />
             ))}
           </div>

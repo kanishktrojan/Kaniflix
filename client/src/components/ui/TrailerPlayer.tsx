@@ -99,10 +99,16 @@ export const TrailerPlayer: React.FC<TrailerPlayerProps> = ({
 }) => {
     const [isMuted, setIsMuted] = useState(true);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [logoError, setLogoError] = useState(false);
     const playerRef = useRef<YTPlayer | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const playerIdRef = useRef(`yt-player-${Date.now()}`);
     const endCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Reset logo error state when titleLogo changes
+    React.useEffect(() => {
+        setLogoError(false);
+    }, [titleLogo]);
 
     // Initialize YouTube player
     useEffect(() => {
@@ -304,7 +310,7 @@ export const TrailerPlayer: React.FC<TrailerPlayerProps> = ({
                         /> */}
                     </div>
 
-                    {/* Title Logo - Bottom Left (prioritize logo over text) */}
+                    {/* Title Logo - Bottom Left (prioritize logo over text, with proper fallback) */}
                     {(titleLogo || title) && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -312,14 +318,14 @@ export const TrailerPlayer: React.FC<TrailerPlayerProps> = ({
                             transition={{ delay: 0.5, duration: 0.5 }}
                             className="absolute bottom-12 left-8 md:left-12 lg:left-16 z-30 max-w-md"
                         >
-                            {titleLogo ? (
+                            {titleLogo && !logoError ? (
                                 <img
                                     src={titleLogo}
                                     alt={title || 'Title'}
                                     className="max-h-16 md:max-h-20 lg:max-h-24 w-auto object-contain drop-shadow-2xl"
-                                    onError={(e) => {
-                                        // If logo fails to load, hide it (text fallback handled by parent)
-                                        e.currentTarget.style.display = 'none';
+                                    onError={() => {
+                                        // If logo fails to load, show text fallback
+                                        setLogoError(true);
                                     }}
                                 />
                             ) : title ? (
