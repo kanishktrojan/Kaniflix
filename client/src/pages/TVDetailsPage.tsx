@@ -1,20 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
   Plus,
   Check,
   Star,
   Calendar,
-  Film,
   Tv,
+  Download,
+  Film,
 } from 'lucide-react';
 import { tmdbService, userContentService } from '@/services';
 import { MediaRow, CastGrid } from '@/components/media';
 import { EpisodeList, SeasonSelector, VideoModal } from '@/components/player';
-import { Button, Image, Badge, Skeleton } from '@/components/ui';
+import { Button, Image, Badge, Skeleton, DownloadModal, TrailerPlayer } from '@/components/ui';
 import { useAuthStore } from '@/store';
 import { useWatchProgress } from '@/hooks';
 import { getImageUrl, formatDate, cn } from '@/utils';
@@ -29,6 +30,10 @@ const TVDetailsPage: React.FC = () => {
 
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+  const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
+  const hasAutoPlayedRef = useRef(false); // Track if auto-play already triggered
+  const [downloadEpisode, setDownloadEpisode] = useState<{ season: number; episode: number; name?: string }>({ season: 1, episode: 1 });
   const [currentEpisode, setCurrentEpisode] = useState<{ season: number; episode: number; name?: string }>({ season: 1, episode: 1 });
 
   // Fetch TV show details
@@ -83,6 +88,9 @@ const TVDetailsPage: React.FC = () => {
     queryFn: () => tmdbService.getTVVideos(parseInt(id!)),
     enabled: !!id,
   });
+
+  // Logo URL is now included in TV show details response
+  const logoUrl = show?.logoPath || undefined;
 
   // Check if in watchlist
   const { data: watchlistStatus } = useQuery({
@@ -154,13 +162,32 @@ const TVDetailsPage: React.FC = () => {
     }
   };
 
-  // Get trailer
-  const trailer = videos?.results.find(
-    (v: Video) => v.type === 'Trailer' && v.site === 'YouTube'
-  );
+  // Handle episode download
+  const handleEpisodeDownload = useCallback((episode: Episode) => {
+    setDownloadEpisode({ season: selectedSeason, episode: episode.episodeNumber, name: episode.name });
+    setIsDownloadOpen(true);
+  }, [selectedSeason]);
 
   // Get top cast
   const topCast = credits?.cast?.slice(0, 10);
+
+  // Get trailer from TMDB videos
+  const trailer = videos?.results.find(
+    (v: Video) => v.type === 'Trailer' && v.site === 'YouTube'
+  );
+  const trailerKey = trailer?.key;
+
+  // Auto-play trailer after 10 seconds when page loads (only once)
+  useEffect(() => {
+    if (!trailerKey || hasAutoPlayedRef.current) return;
+
+    const timer = setTimeout(() => {
+      hasAutoPlayedRef.current = true;
+      setIsTrailerPlaying(true);
+    }, 10000); // 10 seconds
+
+    return () => clearTimeout(timer);
+  }, [trailerKey]);
 
   // Handle season change in modal - only loads episode list, does NOT change current video
   // IMPORTANT: This hook must be defined before any conditional returns
@@ -215,8 +242,25 @@ const TVDetailsPage: React.FC = () => {
         seasons={show.seasons}
         onEpisodeChange={handleEpisodeChange}
         onSeasonChange={handleSeasonChangeInModal}
+        onDownload={() => {
+          setDownloadEpisode(currentEpisode);
+          setIsDownloadOpen(true);
+        }}
         onPlayerEvent={handlePlayerEvent}
         onMediaData={handleMediaData}
+      />
+
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={isDownloadOpen}
+        onClose={() => setIsDownloadOpen(false)}
+        tmdbId={tmdbId}
+        mediaType="tv"
+        title={show.title}
+        posterPath={show.posterPath || undefined}
+        season={downloadEpisode.season}
+        episode={downloadEpisode.episode}
+        episodeName={downloadEpisode.name}
       />
 
       {/* Hero Section */}
@@ -231,6 +275,15 @@ const TVDetailsPage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
         </div>
+
+        {/* Trailer Player - Hotstar style */}
+        <TrailerPlayer
+          videoId={trailerKey || ''}
+          isPlaying={isTrailerPlaying}
+          onClose={() => setIsTrailerPlaying(false)}
+          titleLogo={logoUrl}
+          title={show.title}
+        />
 
         {/* Content - positioned from bottom like Netflix */}
         <div className="absolute bottom-[8%] md:bottom-[10%] left-0 right-0 px-6 md:px-12 lg:px-16">
@@ -257,12 +310,12 @@ const TVDetailsPage: React.FC = () => {
                 className="flex-1 max-w-3xl"
               >
                 {/* Title */}
-                <h1 
+                <h1
                   className={cn(
                     'font-bold mb-4 leading-tight',
-                    show.title.length > 30 
-                      ? 'text-2xl md:text-3xl lg:text-4xl' 
-                      : show.title.length > 20 
+                    show.title.length > 30
+                      ? 'text-2xl md:text-3xl lg:text-4xl'
+                      : show.title.length > 20
                         ? 'text-3xl md:text-4xl lg:text-5xl'
                         : 'text-4xl md:text-5xl lg:text-6xl'
                   )}
@@ -322,48 +375,70 @@ const TVDetailsPage: React.FC = () => {
                   </p>
                 )}
 
-                {/* Overview */}
-                <p className="text-lg text-text-secondary mb-8 line-clamp-3 md:line-clamp-none">
+                {/* Overview - max 3 lines */}
+                <p className="text-lg text-text-secondary mb-8 line-clamp-3">
                   {show.overview}
                 </p>
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap gap-4">
-                  <Button size="lg" onClick={() => handlePlay()} className="px-8">
-                    <Play className="w-5 h-5 mr-2" fill="white" />
-                    Play S1 E1
-                  </Button>
-
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    onClick={handleWatchlistToggle}
-                    disabled={addToWatchlist.isPending || removeFromWatchlist.isPending}
-                  >
-                    {watchlistStatus?.inWatchlist ? (
-                      <>
-                        <Check className="w-5 h-5 mr-2" />
-                        In My List
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-5 h-5 mr-2" />
-                        My List
-                      </>
-                    )}
-                  </Button>
-
-                  {trailer && (
-                    <Button
-                      size="lg"
-                      variant="ghost"
-                      onClick={() => window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank')}
+                <AnimatePresence>
+                  {!isTrailerPlaying && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="flex flex-wrap gap-4"
                     >
-                      <Film className="w-5 h-5 mr-2" />
-                      Watch Trailer
-                    </Button>
+                      <Button size="lg" onClick={() => handlePlay()} className="px-8">
+                        <Play className="w-5 h-5 mr-2" fill="white" />
+                        Play S1 E1
+                      </Button>
+
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        onClick={handleWatchlistToggle}
+                        disabled={addToWatchlist.isPending || removeFromWatchlist.isPending}
+                      >
+                        {watchlistStatus?.inWatchlist ? (
+                          <>
+                            <Check className="w-5 h-5 mr-2" />
+                            In My List
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-5 h-5 mr-2" />
+                            My List
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        onClick={() => {
+                          setDownloadEpisode({ season: 1, episode: 1 });
+                          setIsDownloadOpen(true);
+                        }}
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                        Download
+                      </Button>
+
+                      {trailerKey && (
+                        <Button
+                          size="lg"
+                          variant="ghost"
+                          onClick={() => setIsTrailerPlaying(true)}
+                          className="hover:bg-white/10 flex-shrink-0"
+                        >
+                          <Film className="w-5 h-5 mr-2" />
+                          Watch Trailer
+                        </Button>
+                      )}
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
               </motion.div>
             </div>
           </div>
@@ -389,6 +464,7 @@ const TVDetailsPage: React.FC = () => {
               episodes={seasonData.episodes || []}
               currentEpisode={undefined}
               onEpisodeSelect={handlePlay}
+              onDownload={handleEpisodeDownload}
               watchedEpisodes={new Set()}
             />
           )}

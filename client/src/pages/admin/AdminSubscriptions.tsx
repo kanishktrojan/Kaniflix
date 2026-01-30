@@ -44,6 +44,13 @@ interface PlanFormData {
     videoQuality: string;
     adsEnabled: boolean;
   };
+  featureAccess: {
+    streaming: boolean;
+    downloads: boolean;
+    sports: boolean;
+    quality4k: boolean;
+    hdr: boolean;
+  };
   badge?: string;
   isPopular: boolean;
   isActive: boolean;
@@ -117,6 +124,13 @@ const AdminSubscriptions: React.FC = () => {
       maxDownloads: 0,
       videoQuality: 'HD',
       adsEnabled: true,
+    },
+    featureAccess: {
+      streaming: true,
+      downloads: false,
+      sports: false,
+      quality4k: false,
+      hdr: false,
     },
     badge: '',
     isPopular: false,
@@ -288,6 +302,7 @@ const AdminSubscriptions: React.FC = () => {
           value: f.value || undefined
         })) || initialPlanForm.features,
         limits: plan.limits || initialPlanForm.limits,
+        featureAccess: (plan as any).featureAccess || initialPlanForm.featureAccess,
         badge: typeof plan.badge === 'string' ? plan.badge : plan.badge?.text || '',
         isPopular: plan.isPopular || false,
         isActive: plan.isActive !== false,
@@ -1200,6 +1215,89 @@ const AdminSubscriptions: React.FC = () => {
                         <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
                       </label>
                       <span>Show Ads</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature Access */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Feature Access</h3>
+                  <p className="text-xs text-text-muted mb-4">Control which features subscribers to this plan can access</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={planForm.featureAccess.streaming}
+                          onChange={(e) => setPlanForm({
+                            ...planForm,
+                            featureAccess: { ...planForm.featureAccess, streaming: e.target.checked }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </label>
+                      <span>Streaming Access</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={planForm.featureAccess.downloads}
+                          onChange={(e) => setPlanForm({
+                            ...planForm,
+                            featureAccess: { ...planForm.featureAccess, downloads: e.target.checked }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </label>
+                      <span>Downloads Access</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={planForm.featureAccess.sports}
+                          onChange={(e) => setPlanForm({
+                            ...planForm,
+                            featureAccess: { ...planForm.featureAccess, sports: e.target.checked }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </label>
+                      <span>Sports Access</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={planForm.featureAccess.quality4k}
+                          onChange={(e) => setPlanForm({
+                            ...planForm,
+                            featureAccess: { ...planForm.featureAccess, quality4k: e.target.checked }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </label>
+                      <span>4K Quality</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={planForm.featureAccess.hdr}
+                          onChange={(e) => setPlanForm({
+                            ...planForm,
+                            featureAccess: { ...planForm.featureAccess, hdr: e.target.checked }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </label>
+                      <span>HDR Content</span>
                     </div>
                   </div>
                 </div>

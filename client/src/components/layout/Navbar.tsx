@@ -71,7 +71,7 @@ export const Navbar: React.FC = () => {
         'fixed top-0 left-0 right-0 z-navbar transition-all duration-500',
         isScrolled 
           ? 'bg-background/95 backdrop-blur-md shadow-lg' 
-          : 'bg-gradient-to-b from-black/90 via-black/60 to-transparent',
+          : 'bg-gradient-to-b from-black/80 via-black/50 to-transparent',
         // Hide navbar on mobile when scrolling down
         isHidden && 'transform -translate-y-full'
       )}

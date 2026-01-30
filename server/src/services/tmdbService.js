@@ -32,9 +32,9 @@ class TMDBService {
       (error) => {
         const status = error.response?.status;
         const errorMessage = error.response?.data?.status_message || error.message;
-        
+
         console.error(`❌ TMDB Error: ${status || 'Network'} - ${errorMessage}`);
-        
+
         if (status === 401) {
           throw ApiError.internal('TMDB API key is invalid');
         }
@@ -50,7 +50,7 @@ class TMDBService {
         if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
           throw ApiError.serviceUnavailable('Unable to connect to TMDB.');
         }
-        
+
         throw ApiError.serviceUnavailable(`TMDB error: ${errorMessage}`);
       }
     );
@@ -61,7 +61,7 @@ class TMDBService {
    */
   async cachedFetch(endpoint, params = {}, ttl = CACHE_TTL.MEDIUM) {
     const cacheKey = CacheService.generateTMDBKey(endpoint, params);
-    
+
     return cacheService.getOrSet(cacheKey, async () => {
       const response = await this.client.get(endpoint, { params });
       return response.data;
@@ -135,8 +135,8 @@ class TMDBService {
     return {
       results: data.results.map(item => {
         // Transform and ensure mediaType is set
-        const transformedItem = item.media_type === 'tv' || item.first_air_date 
-          ? this.transformTVShow(item) 
+        const transformedItem = item.media_type === 'tv' || item.first_air_date
+          ? this.transformTVShow(item)
           : this.transformMovie(item);
         return {
           ...transformedItem,
@@ -221,11 +221,18 @@ class TMDBService {
    */
   async getMovieDetails(movieId) {
     const data = await this.cachedFetch(`/movie/${movieId}`, {
-      append_to_response: 'credits,videos,similar,recommendations,external_ids'
+      append_to_response: 'credits,videos,similar,recommendations,external_ids,images'
     }, CACHE_TTL.LONG);
+
+    // Get English logo (or null language) from images
+    const logos = data.images?.logos?.filter(logo =>
+      logo.iso_639_1 === 'en' || logo.iso_639_1 === null
+    ) || [];
+    const logoPath = logos.length > 0 ? logos[0].file_path : null;
 
     return {
       ...this.transformMovie(data),
+      logoPath: logoPath ? `${config.TMDB_IMAGE_BASE_URL}/w500${logoPath}` : null,
       tagline: data.tagline,
       budget: data.budget,
       revenue: data.revenue,
@@ -239,7 +246,7 @@ class TMDBService {
         character: c.character,
         profilePath: this.getImageUrl(c.profile_path, 'medium', 'profile')
       })),
-      crew: data.credits?.crew?.filter(c => 
+      crew: data.credits?.crew?.filter(c =>
         ['Director', 'Producer', 'Writer'].includes(c.job)
       ).slice(0, 10).map(c => ({
         id: c.id,
@@ -247,7 +254,7 @@ class TMDBService {
         job: c.job,
         profilePath: this.getImageUrl(c.profile_path, 'medium', 'profile')
       })),
-      videos: data.videos?.results?.filter(v => 
+      videos: data.videos?.results?.filter(v =>
         v.site === 'YouTube' && ['Trailer', 'Teaser'].includes(v.type)
       ).map(v => ({
         id: v.id,
@@ -411,11 +418,18 @@ class TMDBService {
    */
   async getTVShowDetails(tvId) {
     const data = await this.cachedFetch(`/tv/${tvId}`, {
-      append_to_response: 'credits,videos,similar,recommendations,external_ids,content_ratings'
+      append_to_response: 'credits,videos,similar,recommendations,external_ids,content_ratings,images'
     }, CACHE_TTL.LONG);
+
+    // Get English logo (or null language) from images
+    const logos = data.images?.logos?.filter(logo =>
+      logo.iso_639_1 === 'en' || logo.iso_639_1 === null
+    ) || [];
+    const logoPath = logos.length > 0 ? logos[0].file_path : null;
 
     return {
       ...this.transformTVShow(data),
+      logoPath: logoPath ? `${config.TMDB_IMAGE_BASE_URL}/w500${logoPath}` : null,
       tagline: data.tagline,
       status: data.status,
       type: data.type,
@@ -440,7 +454,7 @@ class TMDBService {
         character: c.character,
         profilePath: this.getImageUrl(c.profile_path, 'medium', 'profile')
       })),
-      videos: data.videos?.results?.filter(v => 
+      videos: data.videos?.results?.filter(v =>
         v.site === 'YouTube' && ['Trailer', 'Teaser', 'Opening Credits'].includes(v.type)
       ).map(v => ({
         id: v.id,
@@ -607,7 +621,7 @@ class TMDBService {
    */
   async search(query, page = 1) {
     const data = await this.cachedFetch('/search/multi', { query, page }, CACHE_TTL.SHORT);
-    
+
     return {
       results: data.results
         .filter(item => item.media_type !== 'person')
@@ -628,7 +642,7 @@ class TMDBService {
    */
   async searchMovies(query, page = 1) {
     const data = await this.cachedFetch('/search/movie', { query, page }, CACHE_TTL.SHORT);
-    
+
     return {
       results: data.results.map(item => ({ ...this.transformMovie(item), mediaType: 'movie' })),
       page: data.page,
@@ -642,7 +656,7 @@ class TMDBService {
    */
   async searchTVShows(query, page = 1) {
     const data = await this.cachedFetch('/search/tv', { query, page }, CACHE_TTL.SHORT);
-    
+
     return {
       results: data.results.map(item => ({ ...this.transformTVShow(item), mediaType: 'tv' })),
       page: data.page,
@@ -656,7 +670,7 @@ class TMDBService {
    */
   async searchPeople(query, page = 1) {
     const data = await this.cachedFetch('/search/person', { query, page }, CACHE_TTL.SHORT);
-    
+
     return {
       results: data.results.map(person => ({
         id: person.id,

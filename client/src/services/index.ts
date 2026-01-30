@@ -8,6 +8,7 @@ export { adminService } from './adminService';
 export { sportsService } from './sportsService';
 export { profileService } from './profileService';
 export { paymentService } from './paymentService';
+export { downloadService } from './downloadService';
 export { default as proxyService, getProxyUrl, getSignedProxyUrl, getJWPlayerConfig, checkProxyHealth } from './proxyService';
 export type { MediaProgress, EpisodeProgress, ContinueWatchingItem } from './progressService';
 export type { ProxyPlayerConfig } from './proxyService';

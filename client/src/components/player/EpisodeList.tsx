@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Play, Check, Plus, Clock } from 'lucide-react';
+import { Play, Check, Plus, Clock, Download } from 'lucide-react';
 import { cn, formatRuntime, getImageUrl } from '@/utils';
 import { Episode, Season } from '@/types';
 import { Image } from '@/components/ui';
@@ -10,6 +10,7 @@ interface EpisodeListProps {
   episodes: Episode[];
   currentEpisode?: number;
   onEpisodeSelect: (episode: Episode) => void;
+  onDownload?: (episode: Episode) => void;
   watchedEpisodes?: Set<number>;
   className?: string;
 }
@@ -19,6 +20,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
   episodes,
   currentEpisode,
   onEpisodeSelect,
+  onDownload,
   watchedEpisodes = new Set(),
   className,
 }) => {
@@ -27,7 +29,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
       <h3 className="text-xl font-semibold">
         Season {season.seasonNumber}: {season.name}
       </h3>
-      
+
       <div className="grid gap-4">
         {episodes.map((episode) => {
           const isCurrent = currentEpisode === episode.episodeNumber;
@@ -51,7 +53,7 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                   alt={episode.name}
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Play Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
                   <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
@@ -86,9 +88,9 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                     </>
                   )}
                 </div>
-                
+
                 <h4 className="font-medium mt-1 line-clamp-1">{episode.name}</h4>
-                
+
                 <p className="text-sm text-text-secondary mt-1 line-clamp-2">
                   {episode.overview || 'No description available.'}
                 </p>
@@ -101,8 +103,25 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
                 )}
               </div>
 
-              {/* Watched Indicator */}
-              <div className="flex-shrink-0 flex items-center">
+              {/* Watched Indicator & Download Button */}
+              <div className="flex-shrink-0 flex items-center gap-2">
+                {/* Download Button */}
+                {onDownload && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDownload(episode);
+                    }}
+                    className="w-8 h-8 rounded-full bg-primary/20 hover:bg-primary/30 flex items-center justify-center transition-colors"
+                    title={`Download ${episode.name}`}
+                  >
+                    <Download className="w-4 h-4 text-primary" />
+                  </motion.button>
+                )}
+
+                {/* Watched Indicator */}
                 {isWatched ? (
                   <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
                     <Check className="w-4 h-4 text-green-500" />

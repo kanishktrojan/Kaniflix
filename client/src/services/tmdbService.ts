@@ -134,6 +134,28 @@ export const tmdbService = {
   },
 
   /**
+   * Get movie images (logos, posters, backdrops)
+   * Filters for English or null language logos
+   */
+  async getMovieImages(id: number): Promise<{ logos: any[]; posters: any[]; backdrops: any[] }> {
+    try {
+      const response = await api.get(`/movies/${id}/images`);
+      const data = response.data.data || response.data;
+      // Filter logos for English or null language
+      const logos = (data.logos || []).filter(
+        (logo: any) => logo.iso_639_1 === 'en' || logo.iso_639_1 === null
+      );
+      return {
+        logos,
+        posters: data.posters || [],
+        backdrops: data.backdrops || [],
+      };
+    } catch {
+      return { logos: [], posters: [], backdrops: [] };
+    }
+  },
+
+  /**
    * Discover movies with filters
    */
   async discoverMovies(filters: BrowseFilters): Promise<PaginatedResponse<Movie>> {
@@ -277,6 +299,28 @@ export const tmdbService = {
   async getTVVideos(id: number): Promise<{ results: any[] }> {
     const response = await api.get(`/tv/${id}/videos`);
     return response.data.data;
+  },
+
+  /**
+   * Get TV show images (logos, posters, backdrops)
+   * Filters for English or null language logos
+   */
+  async getTVImages(id: number): Promise<{ logos: any[]; posters: any[]; backdrops: any[] }> {
+    try {
+      const response = await api.get(`/tv/${id}/images`);
+      const data = response.data.data || response.data;
+      // Filter logos for English or null language
+      const logos = (data.logos || []).filter(
+        (logo: any) => logo.iso_639_1 === 'en' || logo.iso_639_1 === null
+      );
+      return {
+        logos,
+        posters: data.posters || [],
+        backdrops: data.backdrops || [],
+      };
+    } catch {
+      return { logos: [], posters: [], backdrops: [] };
+    }
   },
 
   /**

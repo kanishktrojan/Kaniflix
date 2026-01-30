@@ -98,7 +98,7 @@ export const OnlineRestoredIndicator: React.FC = () => {
     } else if (wasOffline) {
       setShowRestored(true);
       setWasOffline(false);
-      
+
       // Auto-hide after 3 seconds
       const timer = setTimeout(() => setShowRestored(false), 3000);
       return () => clearTimeout(timer);

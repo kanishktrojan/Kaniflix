@@ -28,6 +28,7 @@ export interface Movie extends MediaItem {
   revenue?: number;
   status?: string;
   imdbId?: string;
+  logoPath?: string | null;
   productionCompanies?: ProductionCompany[];
   cast?: CastMember[];
   crew?: CrewMember[];
@@ -47,6 +48,7 @@ export interface TVShow extends MediaItem {
   type?: string;
   tagline?: string;
   imdbId?: string;
+  logoPath?: string | null;
   networks?: Network[];
   seasons?: Season[];
   cast?: CastMember[];
@@ -391,7 +393,7 @@ export interface BulkUpdateRequest {
 
 // ==================== SPORTS TYPES ====================
 
-export type SportCategory = 
+export type SportCategory =
   | 'cricket'
   | 'football'
   | 'basketball'
@@ -600,6 +602,13 @@ export interface SubscriptionPlan {
   };
   features?: SubscriptionPlanFeature[];
   limits?: SubscriptionPlanLimits;
+  featureAccess?: {
+    streaming: boolean;
+    downloads: boolean;
+    sports: boolean;
+    quality4k: boolean;
+    hdr: boolean;
+  };
   badge?: string | {
     text: string;
     color: string;
@@ -872,4 +881,20 @@ export interface RedeemCouponResponse {
     value: number;
     amount: number;
   };
+}
+
+// ==================== DOWNLOAD TYPES ====================
+
+export interface DownloadStream {
+  name: string;        // Source name (UHDMovies, StreamFlix)
+  title: string;       // Stream title with details
+  url: string;         // Download URL
+  quality: string;     // Quality (720p, 1080p, 2160p)
+  size: string;        // File size or duration
+  type?: string;       // Stream type (direct, etc.)
+  headers?: Record<string, string>;  // Optional headers for the request
+}
+
+export interface DownloadResponse {
+  streams: DownloadStream[];
 }

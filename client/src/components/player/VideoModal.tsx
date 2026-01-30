@@ -1,9 +1,11 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, ChevronDown, Play, Clock } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, Play, Clock, Download } from 'lucide-react';
 import { EmbedPlayer, type PlayerEventData, type MediaProgressData } from './EmbedPlayer';
 import { cn } from '@/utils';
 import { getImageUrl } from '@/utils';
+import { useSubscription } from '@/hooks';
+import { SubscriptionGate } from '@/components/ui';
 import type { Episode, Season } from '@/types';
 
 interface VideoModalProps {
@@ -22,6 +24,8 @@ interface VideoModalProps {
   seasons?: Season[];
   onEpisodeChange?: (season: number, episode: number) => void;
   onSeasonChange?: (season: number) => void;
+  /** Called when download button is clicked */
+  onDownload?: () => void;
   /** Called on every player event (play, pause, timeupdate, ended) for progress tracking */
   onPlayerEvent?: (eventData: PlayerEventData) => void;
   /** Called when VidRock sends full progress snapshot (MEDIA_DATA) */
@@ -43,9 +47,14 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   seasons,
   onEpisodeChange,
   onSeasonChange,
+  onDownload,
   onPlayerEvent,
   onMediaData,
 }) => {
+  // Subscription check for streaming access
+  const { hasFeatureAccess, isLoading: subscriptionLoading } = useSubscription();
+  const streamingAccess = hasFeatureAccess('streaming');
+
   // Track the displayed season in episode list (may differ from currently playing season)
   const [displayedSeason, setDisplayedSeason] = useState(season || 1);
 
@@ -160,45 +169,58 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               {/* Video Player Container - 16:9 aspect ratio */}
               <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                 <div className="absolute inset-0">
-                  <EmbedPlayer
-                    tmdbId={tmdbId}
-                    mediaType={mediaType}
-                    season={season}
-                    episode={episode}
-                    title={title}
-                    subtitle={subtitle}
-                    posterPath={backdropPath || posterPath}
-                    onPlayerEvent={onPlayerEvent}
-                    onMediaData={onMediaData}
-                  />
-
-                  {/* Episode Navigation Overlay for TV Shows */}
-                  {mediaType === 'tv' && seasonData?.episodes && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      {/* Previous Episode Button */}
-                      {canGoPrev && (
-                        <button
-                          onClick={() => navigateEpisode('prev')}
-                          className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
-                          style={{ opacity: 0.7 }}
-                          title="Previous Episode"
-                        >
-                          <ChevronLeft className="w-6 h-6" />
-                        </button>
-                      )}
-
-                      {/* Next Episode Button */}
-                      {canGoNext && (
-                        <button
-                          onClick={() => navigateEpisode('next')}
-                          className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
-                          style={{ opacity: 0.7 }}
-                          title="Next Episode"
-                        >
-                          <ChevronRight className="w-6 h-6" />
-                        </button>
-                      )}
+                  {/* Subscription Gate - check before showing player */}
+                  {!streamingAccess.hasAccess ? (
+                    <div className="w-full h-full flex items-center justify-center bg-black">
+                      <SubscriptionGate feature="streaming" showInline />
                     </div>
+                  ) : subscriptionLoading ? (
+                    <div className="w-full h-full flex items-center justify-center bg-black">
+                      <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <>
+                      <EmbedPlayer
+                        tmdbId={tmdbId}
+                        mediaType={mediaType}
+                        season={season}
+                        episode={episode}
+                        title={title}
+                        subtitle={subtitle}
+                        posterPath={backdropPath || posterPath}
+                        onPlayerEvent={onPlayerEvent}
+                        onMediaData={onMediaData}
+                      />
+
+                      {/* Episode Navigation Overlay for TV Shows */}
+                      {mediaType === 'tv' && seasonData?.episodes && (
+                        <div className="absolute inset-0 pointer-events-none">
+                          {/* Previous Episode Button */}
+                          {canGoPrev && (
+                            <button
+                              onClick={() => navigateEpisode('prev')}
+                              className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
+                              style={{ opacity: 0.7 }}
+                              title="Previous Episode"
+                            >
+                              <ChevronLeft className="w-6 h-6" />
+                            </button>
+                          )}
+
+                          {/* Next Episode Button */}
+                          {canGoNext && (
+                            <button
+                              onClick={() => navigateEpisode('next')}
+                              className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
+                              style={{ opacity: 0.7 }}
+                              title="Next Episode"
+                            >
+                              <ChevronRight className="w-6 h-6" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -213,6 +235,20 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                       <p className="text-base text-white/70">{subtitle}</p>
                     )}
                   </div>
+
+                  {/* Download Button */}
+                  {onDownload && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={onDownload}
+                      className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 rounded-lg text-primary transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-5 h-5" />
+                      <span className="hidden sm:inline font-medium">Download</span>
+                    </motion.button>
+                  )}
 
                   {/* Episode Navigation for TV */}
                   {mediaType === 'tv' && seasonData?.episodes && (
@@ -346,8 +382,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             </div>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+      )
+      }
+    </AnimatePresence >
   );
 };
 

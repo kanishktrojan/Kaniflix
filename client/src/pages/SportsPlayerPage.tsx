@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useSportsStore, useAuthStore } from '@/store';
 import { sportsService, getProxyUrl } from '@/services';
+import { useSubscription } from '@/hooks';
+import { SubscriptionGate } from '@/components/ui';
 import { cn } from '@/utils';
 import type { SportsStreamInfo } from '@/types';
 
@@ -301,6 +303,8 @@ const SportsPlayerPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const { currentEvent, isEventLoading, fetchEventById } = useSportsStore();
+  const { hasFeatureAccess, isLoading: subscriptionLoading } = useSubscription();
+  const sportsAccess = hasFeatureAccess('sports');
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<JWPlayer | null>(null);
@@ -309,7 +313,6 @@ const SportsPlayerPage: React.FC = () => {
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-
 
   // Fetch event details
   useEffect(() => {
@@ -655,7 +658,18 @@ const SportsPlayerPage: React.FC = () => {
                     </Link>
                   </div>
                 </div>
-              ) : isStreamLoading ? (
+              ) : !sportsAccess.hasAccess ? (
+                // No sports subscription - Show upgrade prompt
+                <div
+                  className="relative aspect-video bg-cover bg-center"
+                  style={{ backgroundImage: `url(${currentEvent.banner || currentEvent.thumbnail})` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/70 backdrop-blur-sm" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <SubscriptionGate feature="sports" showInline />
+                  </div>
+                </div>
+              ) : subscriptionLoading || isStreamLoading ? (
                 // Loading State - Clean
                 <div className="aspect-video flex items-center justify-center bg-surface">
                   <div className="text-center">

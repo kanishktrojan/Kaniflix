@@ -90,6 +90,29 @@ const subscriptionPlanSchema = new mongoose.Schema(
     isPopular: {
       type: Boolean,
       default: false
+    },
+    // Feature access controls - admin toggles
+    featureAccess: {
+      streaming: {
+        type: Boolean,
+        default: true
+      },
+      downloads: {
+        type: Boolean,
+        default: false
+      },
+      sports: {
+        type: Boolean,
+        default: false
+      },
+      quality4k: {
+        type: Boolean,
+        default: false
+      },
+      hdr: {
+        type: Boolean,
+        default: false
+      }
     }
   },
   {
@@ -209,15 +232,15 @@ userSubscriptionSchema.index({ status: 1 });
 userSubscriptionSchema.index({ currentPeriodEnd: 1 });
 
 // Methods
-userSubscriptionSchema.methods.isExpired = function() {
+userSubscriptionSchema.methods.isExpired = function () {
   return this.currentPeriodEnd < new Date();
 };
 
-userSubscriptionSchema.methods.isInTrial = function() {
+userSubscriptionSchema.methods.isInTrial = function () {
   return this.status === 'trial' && this.trialEnd && this.trialEnd > new Date();
 };
 
-userSubscriptionSchema.methods.canStream = function() {
+userSubscriptionSchema.methods.canStream = function () {
   return ['active', 'trial'].includes(this.status) && !this.isExpired();
 };
 
