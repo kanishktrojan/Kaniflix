@@ -18,7 +18,7 @@ const settingsSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['rate_limiting', 'general', 'security', 'features'],
+      enum: ['rate_limiting', 'general', 'security', 'features', 'email'],
       default: 'general'
     },
     description: {
@@ -142,7 +142,35 @@ settingsSchema.statics.initializeDefaults = async function() {
   return this.getRateLimitSettings();
 };
 
+// Default email service settings
+const DEFAULT_EMAIL_SETTINGS = {
+  provider: 'third_party', // 'third_party' (Resend) or 'kaniflix_service'
+  kaniflixServiceUrl: '',
+  kaniflixServiceApiKey: ''
+};
+
+// Static method to get email service settings
+settingsSchema.statics.getEmailSettings = async function() {
+  const setting = await this.findOne({ key: 'email_service' });
+  return setting ? setting.value : DEFAULT_EMAIL_SETTINGS;
+};
+
+// Static method to update email service settings
+settingsSchema.statics.updateEmailSettings = async function(updates, userId = null) {
+  const current = await this.getEmailSettings();
+  const merged = { ...current, ...updates };
+  
+  return this.setSetting(
+    'email_service',
+    merged,
+    'email',
+    'Email service configuration',
+    userId
+  );
+};
+
 const Settings = mongoose.model('Settings', settingsSchema);
 
 module.exports = Settings;
 module.exports.DEFAULT_RATE_LIMIT_SETTINGS = DEFAULT_RATE_LIMIT_SETTINGS;
+module.exports.DEFAULT_EMAIL_SETTINGS = DEFAULT_EMAIL_SETTINGS;

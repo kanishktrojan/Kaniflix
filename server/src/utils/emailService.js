@@ -1,38 +1,178 @@
 const axios = require('axios');
+const { Resend } = require('resend');
 const config = require('../config');
 
 /**
- * Email Service Client
- * Communicates with the external Email Service via HTTP
- * 
- * IMPORTANT: This service does NOT handle SMTP directly.
- * All email delivery is delegated to the standalone Email Service.
+ * Email Service
+ * Supports two modes controlled via admin settings:
+ * 1. Third Party Service (Resend) - Direct API integration
+ * 2. Kaniflix Service - External microservice via HTTP
  */
 class EmailService {
   constructor() {
-    this.baseUrl = config.EMAIL_SERVICE_URL;
-    this.apiKey = config.EMAIL_SERVICE_API_KEY;
+    this.resend = null;
     this.initialized = false;
+    this.Settings = null; // Will be set lazily to avoid circular dependency
   }
 
   /**
-   * Initialize the email service client
+   * Get the Settings model (lazy load to avoid circular dependency)
+   */
+  getSettingsModel() {
+    if (!this.Settings) {
+      this.Settings = require('../models/Settings');
+    }
+    return this.Settings;
+  }
+
+  /**
+   * Get current email service settings from database
+   */
+  async getEmailSettings() {
+    try {
+      const Settings = this.getSettingsModel();
+      const settings = await Settings.getSetting('email_service');
+      return settings || {
+        provider: 'third_party', // Default to Resend
+        kaniflixServiceUrl: config.EMAIL_SERVICE_URL,
+        kaniflixServiceApiKey: config.EMAIL_SERVICE_API_KEY
+      };
+    } catch (error) {
+      console.warn('⚠️ Could not load email settings, using defaults');
+      return {
+        provider: 'third_party',
+        kaniflixServiceUrl: config.EMAIL_SERVICE_URL,
+        kaniflixServiceApiKey: config.EMAIL_SERVICE_API_KEY
+      };
+    }
+  }
+
+  /**
+   * Get or create the Resend client
+   */
+  getResendClient() {
+    if (!config.RESEND_API_KEY) {
+      return null;
+    }
+    if (!this.resend) {
+      this.resend = new Resend(config.RESEND_API_KEY);
+    }
+    return this.resend;
+  }
+
+  /**
+   * Initialize the email service
    */
   async initialize() {
     if (this.initialized) return;
 
-    // Check configuration
-    if (!this.baseUrl) {
-      console.warn('⚠️ EMAIL_SERVICE_URL not configured. Emails will be logged to console.');
+    const settings = await this.getEmailSettings();
+    
+    if (settings.provider === 'third_party') {
+      if (!config.RESEND_API_KEY) {
+        console.warn('⚠️ RESEND_API_KEY not configured. Emails will be logged to console.');
+      } else {
+        console.log('✅ Email Service ready (Resend - Third Party)');
+      }
     } else {
-      console.log(`✅ Email Service client configured: ${this.baseUrl}`);
+      if (!settings.kaniflixServiceUrl) {
+        console.warn('⚠️ Kaniflix Email Service URL not configured. Emails will be logged to console.');
+      } else {
+        console.log(`✅ Email Service ready (Kaniflix Service: ${settings.kaniflixServiceUrl})`);
+      }
     }
 
     this.initialized = true;
   }
 
   /**
-   * Send email via the Email Service
+   * Send email via Resend (Third Party)
+   */
+  async sendViaResend({ to, subject, html }) {
+    const client = this.getResendClient();
+    
+    if (!client) {
+      console.log('\n📧 ========== EMAIL (DEV MODE - Resend not configured) ==========');
+      console.log(`To: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`HTML Length: ${html.length} chars`);
+      console.log('================================================================\n');
+      return { success: true, dev: true };
+    }
+
+    try {
+      const fromAddress = config.EMAIL_FROM || 'KANIFLIX <noreply@kaniflix.in>';
+      
+      const { data, error } = await client.emails.send({
+        from: fromAddress,
+        to: [to],
+        subject,
+        html
+      });
+
+      if (error) {
+        console.error('❌ Resend error:', error.message);
+        throw new Error(error.message);
+      }
+
+      console.log(`📧 Email sent via Resend to ${to}: ${data.id}`);
+      return { success: true, messageId: data.id, provider: 'resend' };
+    } catch (error) {
+      console.error('❌ Resend error:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Send email via Kaniflix Service (external microservice)
+   */
+  async sendViaKaniflixService({ to, subject, html }, settings) {
+    const serviceUrl = settings.kaniflixServiceUrl || config.EMAIL_SERVICE_URL;
+    const apiKey = settings.kaniflixServiceApiKey || config.EMAIL_SERVICE_API_KEY;
+
+    if (!serviceUrl) {
+      console.log('\n📧 ========== EMAIL (DEV MODE - Kaniflix Service not configured) ==========');
+      console.log(`To: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`HTML Length: ${html.length} chars`);
+      console.log('==========================================================================\n');
+      return { success: true, dev: true };
+    }
+
+    const targetUrl = `${serviceUrl}/send`;
+    console.log(`📧 Attempting to send email to ${to} via Kaniflix Service: ${targetUrl}`);
+
+    try {
+      const response = await axios.post(
+        targetUrl,
+        { to, subject, html },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(apiKey && { 'X-API-Key': apiKey })
+          },
+          timeout: 60000
+        }
+      );
+
+      console.log(`📧 Email sent via Kaniflix Service to ${to}`);
+      return { ...response.data, provider: 'kaniflix_service' };
+    } catch (error) {
+      console.error('❌ Kaniflix Service error details:');
+      console.error('   URL:', targetUrl);
+      console.error('   Error code:', error.code);
+      console.error('   Error message:', error.message);
+      if (error.response) {
+        console.error('   Response status:', error.response.status);
+        console.error('   Response data:', error.response.data);
+      }
+      const errorMessage = error.response?.data?.message || error.message;
+      throw new Error(`Failed to send email via Kaniflix Service: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Send email using the configured provider
    * @param {Object} options - Email options
    * @param {string} options.to - Recipient email
    * @param {string} options.subject - Email subject
@@ -42,45 +182,13 @@ class EmailService {
   async sendEmail({ to, subject, html }) {
     await this.initialize();
 
-    // Development fallback - log to console if service URL not configured
-    if (!this.baseUrl) {
-      console.log('\n📧 ========== EMAIL (DEV MODE) ==========');
-      console.log(`To: ${to}`);
-      console.log(`Subject: ${subject}`);
-      console.log(`HTML Length: ${html.length} chars`);
-      console.log('=========================================\n');
-      return { success: true, dev: true };
-    }
-
-    const targetUrl = `${this.baseUrl}/send`;
-    console.log(`📧 Attempting to send email to ${to} via ${targetUrl}`);
-
-    try {
-      const response = await axios.post(
-        targetUrl,
-        { to, subject, html },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(this.apiKey && { 'X-API-Key': this.apiKey })
-          },
-          timeout: 60000 // 60 second timeout
-        }
-      );
-
-      console.log(`📧 Email sent via Email Service to ${to}`);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Email Service error details:');
-      console.error('   URL:', targetUrl);
-      console.error('   Error code:', error.code);
-      console.error('   Error message:', error.message);
-      if (error.response) {
-        console.error('   Response status:', error.response.status);
-        console.error('   Response data:', error.response.data);
-      }
-      const errorMessage = error.response?.data?.message || error.message;
-      throw new Error(`Failed to send email: ${errorMessage}`);
+    const settings = await this.getEmailSettings();
+    
+    if (settings.provider === 'kaniflix_service') {
+      return this.sendViaKaniflixService({ to, subject, html }, settings);
+    } else {
+      // Default to Resend (third_party)
+      return this.sendViaResend({ to, subject, html });
     }
   }
 
@@ -152,7 +260,6 @@ class EmailService {
       </html>
     `;
 
-    // Send via Email Service
     return this.sendEmail({ to: email, subject, html });
   }
 
@@ -210,7 +317,6 @@ class EmailService {
       </html>
     `;
 
-    // Send via Email Service
     return this.sendEmail({ to: email, subject, html });
   }
 }

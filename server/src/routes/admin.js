@@ -69,9 +69,14 @@ router.get('/subscriptions/users/:userId', subscriptionAdminController.getUserSu
 router.put('/subscriptions/users/:userId', subscriptionAdminController.updateUserSubscription);
 router.delete('/subscriptions/users/:userId', subscriptionAdminController.cancelUserSubscription);
 
-// Settings Management
+// Settings Management - Rate Limits
 router.get('/settings/rate-limits', adminController.getRateLimitSettings);
 router.put('/settings/rate-limits', adminController.updateRateLimitSettings);
 router.post('/settings/rate-limits/reset', adminController.resetRateLimitSettings);
+
+// Settings Management - Email Service
+router.get('/settings/email', adminController.getEmailSettings);
+router.put('/settings/email', adminController.updateEmailSettings);
+router.post('/settings/email/test', adminController.testEmailService);
 
 module.exports = router;

@@ -16,9 +16,16 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
+  Mail,
+  Server,
+  Send,
+  ExternalLink,
 } from 'lucide-react';
 import { adminService } from '@/services';
-import type { RateLimitSettings, RateLimitCategorySettings, RateLimitCategory } from '@/types';
+import type { RateLimitSettings, RateLimitCategorySettings, RateLimitCategory, EmailSettings, EmailServiceProvider } from '@/types';
+
+// Settings Tab Type
+type SettingsTab = 'rate-limits' | 'email';
 
 // Category configuration
 const categoryConfig: Record<
@@ -76,6 +83,10 @@ const formatWindow = (ms: number): string => {
 };
 
 const AdminSettings = () => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<SettingsTab>('rate-limits');
+  
+  // Rate limit settings state
   const [settings, setSettings] = useState<RateLimitSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,10 +95,38 @@ const AdminSettings = () => {
   const [expandedCategory, setExpandedCategory] = useState<RateLimitCategory | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [originalSettings, setOriginalSettings] = useState<RateLimitSettings | null>(null);
+  
+  // Email settings state
+  const [emailSettings, setEmailSettings] = useState<EmailSettings | null>(null);
+  const [emailLoading, setEmailLoading] = useState(true);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [emailHasChanges, setEmailHasChanges] = useState(false);
+  const [originalEmailSettings, setOriginalEmailSettings] = useState<EmailSettings | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testingEmail, setTestingEmail] = useState(false);
 
   useEffect(() => {
     fetchSettings();
+    fetchEmailSettings();
   }, []);
+  
+  const fetchEmailSettings = async () => {
+    try {
+      setEmailLoading(true);
+      setEmailError(null);
+      const data = await adminService.getEmailSettings();
+      setEmailSettings(data);
+      setOriginalEmailSettings(JSON.parse(JSON.stringify(data)));
+      setEmailHasChanges(false);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load email settings';
+      setEmailError(errorMessage);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -170,8 +209,80 @@ const AdminSettings = () => {
       setHasChanges(false);
     }
   };
+  
+  // Email settings handlers
+  const handleSaveEmail = async () => {
+    if (!emailSettings) return;
 
-  if (loading) {
+    try {
+      setEmailSaving(true);
+      setEmailError(null);
+      setEmailSuccess(null);
+      const updated = await adminService.updateEmailSettings(emailSettings);
+      setEmailSettings(updated);
+      setOriginalEmailSettings(JSON.parse(JSON.stringify(updated)));
+      setEmailHasChanges(false);
+      setEmailSuccess('Email settings saved successfully!');
+      setTimeout(() => setEmailSuccess(null), 5000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save email settings';
+      setEmailError(errorMessage);
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+  
+  const updateEmailProvider = (provider: EmailServiceProvider) => {
+    if (!emailSettings) return;
+    setEmailSettings({ ...emailSettings, provider });
+    setEmailHasChanges(true);
+  };
+  
+  const updateKaniflixServiceUrl = (url: string) => {
+    if (!emailSettings) return;
+    setEmailSettings({ ...emailSettings, kaniflixServiceUrl: url });
+    setEmailHasChanges(true);
+  };
+  
+  const updateKaniflixServiceApiKey = (key: string) => {
+    if (!emailSettings) return;
+    setEmailSettings({ ...emailSettings, kaniflixServiceApiKey: key });
+    setEmailHasChanges(true);
+  };
+  
+  const discardEmailChanges = () => {
+    if (originalEmailSettings) {
+      setEmailSettings(JSON.parse(JSON.stringify(originalEmailSettings)));
+      setEmailHasChanges(false);
+    }
+  };
+  
+  const handleTestEmail = async () => {
+    if (!testEmail) {
+      setEmailError('Please enter an email address to send test email');
+      return;
+    }
+    
+    try {
+      setTestingEmail(true);
+      setEmailError(null);
+      setEmailSuccess(null);
+      const result = await adminService.testEmailService(testEmail);
+      if (result.dev) {
+        setEmailSuccess('Test email logged to console (dev mode - email service not configured)');
+      } else {
+        setEmailSuccess(`Test email sent successfully via ${result.provider}! Message ID: ${result.messageId}`);
+      }
+      setTimeout(() => setEmailSuccess(null), 8000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send test email';
+      setEmailError(errorMessage);
+    } finally {
+      setTestingEmail(false);
+    }
+  };
+
+  if (loading && emailLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500" />
@@ -186,88 +297,127 @@ const AdminSettings = () => {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Settings className="w-7 h-7 text-red-500" />
-            Rate Limit Settings
+            Settings
           </h1>
           <p className="text-gray-400 mt-1">
-            Configure API rate limiting to protect your server from abuse
+            Configure your KANIFLIX platform settings
           </p>
         </div>
+      </div>
+      
+      {/* Tabs */}
+      <div className="flex border-b border-gray-700">
+        <button
+          onClick={() => setActiveTab('rate-limits')}
+          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
+            activeTab === 'rate-limits'
+              ? 'text-red-500 border-b-2 border-red-500'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          Rate Limits
+        </button>
+        <button
+          onClick={() => setActiveTab('email')}
+          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
+            activeTab === 'email'
+              ? 'text-red-500 border-b-2 border-red-500'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <Mail className="w-4 h-4" />
+          Email Service
+        </button>
+      </div>
+      
+      {/* Rate Limits Tab */}
+      {activeTab === 'rate-limits' && (
+        <div className="space-y-6">
+          {/* Rate Limits Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Rate Limiting</h2>
+              <p className="text-gray-400 text-sm mt-1">
+                Configure API rate limiting to protect your server from abuse
+              </p>
+            </div>
 
-        <div className="flex items-center gap-3">
-          {hasChanges && (
-            <button
-              onClick={discardChanges}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-            >
-              Discard
-            </button>
-          )}
-          <button
-            onClick={handleReset}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reset to Defaults
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg font-medium transition-all ${
-              hasChanges
-                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {saving ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-            ) : (
-              <Save className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+              {hasChanges && (
+                <button
+                  onClick={discardChanges}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Discard
+                </button>
+              )}
+              <button
+                onClick={handleReset}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Reset to Defaults
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!hasChanges || saving}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg font-medium transition-all ${
+                  hasChanges
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {saving ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                {error}
+              </motion.div>
             )}
-            Save Changes
-          </button>
-        </div>
-      </div>
 
-      {/* Messages */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
-          >
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </motion.div>
-        )}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400"
+              >
+                <Check className="w-5 h-5 flex-shrink-0" />
+                {success}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400"
-          >
-            <Check className="w-5 h-5 flex-shrink-0" />
-            {success}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Info Banner */}
-      <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-        <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-300">
-          <p className="font-medium">How Rate Limiting Works</p>
-          <p className="mt-1 text-blue-400/80">
-            Rate limiting controls how many requests a user can make within a time window.
-            When the limit is exceeded, users receive a 429 (Too Many Requests) error.
-            Settings are cached for 30 seconds, so changes may take up to 30 seconds to apply.
-          </p>
-        </div>
-      </div>
+          {/* Info Banner */}
+          <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-300">
+              <p className="font-medium">How Rate Limiting Works</p>
+              <p className="mt-1 text-blue-400/80">
+                Rate limiting controls how many requests a user can make within a time window.
+                When the limit is exceeded, users receive a 429 (Too Many Requests) error.
+                Settings are cached for 30 seconds, so changes may take up to 30 seconds to apply.
+              </p>
+            </div>
+          </div>
 
       {/* Settings Cards */}
       {settings && (
@@ -478,6 +628,239 @@ const AdminSettings = () => {
               </motion.div>
             );
           })}
+        </div>
+      )}
+      </div>
+      )}
+      
+      {/* Email Service Tab */}
+      {activeTab === 'email' && (
+        <div className="space-y-6">
+          {/* Email Settings Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Email Service</h2>
+              <p className="text-gray-400 text-sm mt-1">
+                Configure how OTP and notification emails are sent
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {emailHasChanges && (
+                <button
+                  onClick={discardEmailChanges}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Discard
+                </button>
+              )}
+              <button
+                onClick={handleSaveEmail}
+                disabled={!emailHasChanges || emailSaving}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg font-medium transition-all ${
+                  emailHasChanges
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {emailSaving ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </div>
+          
+          {/* Email Messages */}
+          <AnimatePresence>
+            {emailError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                {emailError}
+              </motion.div>
+            )}
+
+            {emailSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400"
+              >
+                <Check className="w-5 h-5 flex-shrink-0" />
+                {emailSuccess}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Info Banner */}
+          <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-300">
+              <p className="font-medium">Email Service Options</p>
+              <p className="mt-1 text-blue-400/80">
+                <strong>Third Party Service (Resend):</strong> Uses Resend API directly from the main server. Fast and reliable with generous free tier.
+                <br />
+                <strong>Kaniflix Service:</strong> Uses your own email microservice running on a separate server. Useful as backup or when Resend limits are reached.
+              </p>
+            </div>
+          </div>
+          
+          {emailLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500" />
+            </div>
+          ) : emailSettings && (
+            <div className="space-y-6">
+              {/* Provider Selection */}
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Email Provider</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Third Party Service (Resend) */}
+                  <button
+                    onClick={() => updateEmailProvider('third_party')}
+                    className={`relative p-6 rounded-xl border-2 transition-all text-left ${
+                      emailSettings.provider === 'third_party'
+                        ? 'border-red-500 bg-red-500/10'
+                        : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                    }`}
+                  >
+                    {emailSettings.provider === 'third_party' && (
+                      <div className="absolute top-3 right-3">
+                        <Check className="w-5 h-5 text-red-500" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600">
+                        <ExternalLink className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Third Party Service</h4>
+                        <p className="text-xs text-gray-400">Resend API</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Uses Resend API directly. Configured via environment variables (RESEND_API_KEY).
+                      Fast, reliable, and includes analytics.
+                    </p>
+                  </button>
+                  
+                  {/* Kaniflix Service */}
+                  <button
+                    onClick={() => updateEmailProvider('kaniflix_service')}
+                    className={`relative p-6 rounded-xl border-2 transition-all text-left ${
+                      emailSettings.provider === 'kaniflix_service'
+                        ? 'border-red-500 bg-red-500/10'
+                        : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                    }`}
+                  >
+                    {emailSettings.provider === 'kaniflix_service' && (
+                      <div className="absolute top-3 right-3">
+                        <Check className="w-5 h-5 text-red-500" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600">
+                        <Server className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">Kaniflix Service</h4>
+                        <p className="text-xs text-gray-400">Self-hosted microservice</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Uses your own email microservice via HTTP. Configure the URL below.
+                      Useful as backup when third-party limits are reached.
+                    </p>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Kaniflix Service Configuration */}
+              {emailSettings.provider === 'kaniflix_service' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6"
+                >
+                  <h3 className="text-lg font-semibold text-white mb-4">Kaniflix Service Configuration</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Service URL
+                      </label>
+                      <input
+                        type="url"
+                        value={emailSettings.kaniflixServiceUrl}
+                        onChange={(e) => updateKaniflixServiceUrl(e.target.value)}
+                        placeholder="https://your-email-service.example.com"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        The URL of your Kaniflix email microservice (e.g., Cloudflare tunnel URL)
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        API Key
+                      </label>
+                      <input
+                        type="password"
+                        value={emailSettings.kaniflixServiceApiKey}
+                        onChange={(e) => updateKaniflixServiceApiKey(e.target.value)}
+                        placeholder="Enter API key for authentication"
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        API key used to authenticate requests to the email service
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Test Email */}
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Test Email Service</h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Send a test email to verify your email service configuration is working correctly.
+                </p>
+                
+                <div className="flex gap-3">
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleTestEmail}
+                    disabled={testingEmail || !testEmail}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {testingEmail ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    Send Test
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

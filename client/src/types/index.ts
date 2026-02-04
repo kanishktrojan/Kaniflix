@@ -573,6 +573,21 @@ export interface RateLimitSettings {
 
 export type RateLimitCategory = keyof RateLimitSettings;
 
+// Email Service Settings
+export type EmailServiceProvider = 'third_party' | 'kaniflix_service';
+
+export interface EmailSettings {
+  provider: EmailServiceProvider;
+  kaniflixServiceUrl: string;
+  kaniflixServiceApiKey: string;
+}
+
+export interface EmailTestResult {
+  provider: string;
+  messageId?: string;
+  dev?: boolean;
+}
+
 // ==================== SUBSCRIPTION & PROFILE TYPES ====================
 
 // Subscription Plan

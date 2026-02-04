@@ -36,6 +36,10 @@ module.exports = {
   EMAIL_SERVICE_URL: process.env.EMAIL_SERVICE_URL || 'http://localhost:5001',
   EMAIL_SERVICE_API_KEY: process.env.EMAIL_SERVICE_API_KEY,
 
+  // Resend Configuration (Third Party Email Service)
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  EMAIL_FROM: process.env.EMAIL_FROM || 'KANIFLIX <noreply@kaniflix.in>',
+
   // Image Sizes
   IMAGE_SIZES: {
     backdrop: {

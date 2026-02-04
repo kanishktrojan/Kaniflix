@@ -9,6 +9,8 @@ import type {
   UserFilters,
   BulkUpdateRequest,
   RateLimitSettings,
+  EmailSettings,
+  EmailTestResult,
   SubscriptionPlan,
   SubscriptionStats,
   CouponCode,
@@ -76,6 +78,22 @@ export const updateRateLimitSettings = async (updates: Partial<RateLimitSettings
 
 export const resetRateLimitSettings = async (): Promise<RateLimitSettings> => {
   const response = await api.post('/admin/settings/rate-limits/reset');
+  return response.data.data;
+};
+
+// Email Service Settings
+export const getEmailSettings = async (): Promise<EmailSettings> => {
+  const response = await api.get('/admin/settings/email');
+  return response.data.data;
+};
+
+export const updateEmailSettings = async (updates: Partial<EmailSettings>): Promise<EmailSettings> => {
+  const response = await api.put('/admin/settings/email', updates);
+  return response.data.data;
+};
+
+export const testEmailService = async (email: string): Promise<EmailTestResult> => {
+  const response = await api.post('/admin/settings/email/test', { email });
   return response.data.data;
 };
 
@@ -194,6 +212,10 @@ export const adminService = {
   getRateLimitSettings,
   updateRateLimitSettings,
   resetRateLimitSettings,
+  // Email Settings
+  getEmailSettings,
+  updateEmailSettings,
+  testEmailService,
   // Subscriptions
   getSubscriptionStats,
   getSubscriptionPlans,

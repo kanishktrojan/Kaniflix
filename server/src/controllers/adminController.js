@@ -586,6 +586,78 @@ const resetRateLimitSettings = asyncHandler(async (req, res) => {
   ApiResponse.success(res, DEFAULT_RATE_LIMIT_SETTINGS, 'Rate limit settings reset to defaults');
 });
 
+/**
+ * Get email service settings
+ * @route GET /api/admin/settings/email
+ * @access Admin only
+ */
+const getEmailSettings = asyncHandler(async (req, res) => {
+  const settings = await Settings.getEmailSettings();
+  ApiResponse.success(res, settings, 'Email settings retrieved successfully');
+});
+
+/**
+ * Update email service settings
+ * @route PUT /api/admin/settings/email
+ * @access Admin only
+ */
+const updateEmailSettings = asyncHandler(async (req, res) => {
+  const { provider, kaniflixServiceUrl, kaniflixServiceApiKey } = req.body;
+  
+  // Validate provider
+  if (provider && !['third_party', 'kaniflix_service'].includes(provider)) {
+    throw ApiError.badRequest('Invalid provider. Must be "third_party" or "kaniflix_service"');
+  }
+  
+  // Build updates object
+  const updates = {};
+  if (provider !== undefined) updates.provider = provider;
+  if (kaniflixServiceUrl !== undefined) updates.kaniflixServiceUrl = kaniflixServiceUrl;
+  if (kaniflixServiceApiKey !== undefined) updates.kaniflixServiceApiKey = kaniflixServiceApiKey;
+  
+  const updatedSettings = await Settings.updateEmailSettings(updates, req.user._id);
+  
+  ApiResponse.success(res, updatedSettings.value, 'Email settings updated successfully');
+});
+
+/**
+ * Test email service
+ * @route POST /api/admin/settings/email/test
+ * @access Admin only
+ */
+const testEmailService = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    throw ApiError.badRequest('Email address is required');
+  }
+  
+  const emailService = require('../utils/emailService');
+  
+  try {
+    const result = await emailService.sendEmail({
+      to: email,
+      subject: 'KANIFLIX - Email Service Test',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #141414; color: #ffffff;">
+          <h1 style="color: #e50914;">KANIFLIX Email Test</h1>
+          <p>This is a test email from your KANIFLIX admin panel.</p>
+          <p>If you received this email, your email service is configured correctly!</p>
+          <p style="color: #888; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>
+        </div>
+      `
+    });
+    
+    ApiResponse.success(res, { 
+      provider: result.provider || 'unknown',
+      messageId: result.messageId,
+      dev: result.dev || false
+    }, 'Test email sent successfully');
+  } catch (error) {
+    throw ApiError.internal(`Failed to send test email: ${error.message}`);
+  }
+});
+
 module.exports = {
   getDashboardStats,
   getAllUsers,
@@ -597,5 +669,8 @@ module.exports = {
   getRecentActivity,
   getRateLimitSettings,
   updateRateLimitSettings,
-  resetRateLimitSettings
+  resetRateLimitSettings,
+  getEmailSettings,
+  updateEmailSettings,
+  testEmailService
 };
