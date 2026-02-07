@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw, X, WifiOff, Wifi } from 'lucide-react';
 import { useServiceWorker, useOnlineStatus } from '@/hooks/usePWA';
+import { useIsMobile, useIsTablet } from '@/hooks';
 
-// Update available notification
+// Mobile bottom nav is ~68px tall; we position notifications just above it on mobile
+const MOBILE_BOTTOM_NAV_HEIGHT = 68;
+
+// Update available notification (stays at top — it's an action banner)
 export const UpdateNotification: React.FC = () => {
   const { isUpdateAvailable, updateServiceWorker } = useServiceWorker();
   const [isDismissed, setIsDismissed] = useState(false);
@@ -48,13 +52,15 @@ export const UpdateNotification: React.FC = () => {
   );
 };
 
-// Offline indicator
+// Offline indicator — fixed at bottom, stays until back online
 export const OfflineIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
   const [showOffline, setShowOffline] = useState(false);
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isMobileOrTablet = isMobile || isTablet;
 
   useEffect(() => {
-    // Show offline indicator with a slight delay to avoid flickering
     let timer: ReturnType<typeof setTimeout>;
     if (!isOnline) {
       timer = setTimeout(() => setShowOffline(true), 500);
@@ -68,17 +74,21 @@ export const OfflineIndicator: React.FC = () => {
     <AnimatePresence>
       {showOffline && (
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
+          initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="fixed top-0 left-0 right-0 z-[70] pt-safe-top"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 8px)' }}
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed left-0 right-0 z-[60]"
+          style={{
+            bottom: isMobileOrTablet ? `${MOBILE_BOTTOM_NAV_HEIGHT}px` : '0px',
+          }}
         >
-          <div className="mx-4 mt-2 bg-surface rounded-xl px-4 py-3 flex items-center justify-center gap-2 shadow-lg">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-            <p className="text-white text-sm font-medium">
-              You're offline - Some features may be limited
+          <div className="flex items-center justify-center gap-2 bg-neutral-700/95 backdrop-blur-sm px-4 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]">
+            <WifiOff className="w-3.5 h-3.5 text-white/80 shrink-0" />
+            <p className="text-white/90 text-xs font-medium">
+              No internet connection
             </p>
+            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-pulse shrink-0" />
           </div>
         </motion.div>
       )}
@@ -86,40 +96,45 @@ export const OfflineIndicator: React.FC = () => {
   );
 };
 
-// Online restored indicator
+// Online restored indicator — appears at bottom, fades away in 3s
 export const OnlineRestoredIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
-  const [wasOffline, setWasOffline] = useState(false);
+  const wasOfflineRef = useRef(false);
   const [showRestored, setShowRestored] = useState(false);
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isMobileOrTablet = isMobile || isTablet;
 
   useEffect(() => {
     if (!isOnline) {
-      setWasOffline(true);
-    } else if (wasOffline) {
+      wasOfflineRef.current = true;
+    } else if (wasOfflineRef.current) {
+      wasOfflineRef.current = false;
       setShowRestored(true);
-      setWasOffline(false);
-
-      // Auto-hide after 3 seconds
       const timer = setTimeout(() => setShowRestored(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [isOnline, wasOffline]);
+  }, [isOnline]);
 
   return (
     <AnimatePresence>
       {showRestored && (
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
+          initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="fixed top-0 left-0 right-0 z-[70] pt-safe-top"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 8px)' }}
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed left-0 right-0 z-[60]"
+          style={{
+            bottom: isMobileOrTablet ? `${MOBILE_BOTTOM_NAV_HEIGHT}px` : '0px',
+          }}
         >
-          <div className="mx-4 mt-2 bg-success rounded-xl px-4 py-3 flex items-center justify-center gap-2 shadow-lg">
-            <div className="w-2 h-2 bg-white rounded-full" />
-            <p className="text-white text-sm font-medium">
-              Back online!
+          <div className="flex items-center justify-center gap-2 bg-green-500/95 backdrop-blur-sm px-4 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.3)]">
+            <Wifi className="w-3.5 h-3.5 text-white shrink-0" />
+            <p className="text-white text-xs font-medium">
+              Back online
             </p>
+            <span className="w-1.5 h-1.5 bg-green-200 rounded-full shrink-0" />
           </div>
         </motion.div>
       )}
