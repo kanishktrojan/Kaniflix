@@ -1,30 +1,45 @@
 /**
  * DevTools Blocker Utility
  * Prevents users from opening browser Developer Tools
- * and redirects the current tab to about:blank if they manage to open it.
- * 
- * NOTE: This only kills the current tab. The user can open a new tab
- * and access the website normally — no persistent blocking.
+ * and closes/redirects the page if they manage to open it.
+ *
+ * - Keyboard shortcuts & context menu are blocked immediately.
+ * - Detection probes start only after a grace period (GRACE_MS) so that
+ *   a user who previously got blocked can revisit the site on a fresh
+ *   page load without being instantly kicked out again (browsers often
+ *   remember that DevTools was open).
+ * - Detection requires CONSECUTIVE_HITS consecutive positive signals
+ *   before acting, which eliminates false-positive one-off triggers.
  */
 
-// Guard so we only fire the redirect once per tab
+const REDIRECT_URL = 'about:blank';
+
+/** Seconds to wait after page load before activating detection probes */
+const GRACE_MS = 4000;
+
+/**
+ * How many consecutive positive detection signals are required before
+ * the page is closed.  This prevents a single false-positive (e.g. a
+ * resize glitch) from killing the session.
+ */
+const CONSECUTIVE_HITS_NEEDED = 3;
+
+/** Running counter – reset to 0 whenever a probe comes back clean */
+let consecutiveHits = 0;
+
+/** Whether detection probes are active */
+let detectionActive = false;
+
+/** Set to true once we've already triggered – avoids double-firing */
 let alreadyTriggered = false;
+
+// ── Keyboard / context-menu blocking (runs immediately) ─────────────
 
 /**
  * Block keyboard shortcuts that open DevTools
- * Exception: Ctrl+'+' / Ctrl+'-' (zoom) are explicitly allowed
  */
 function blockDevToolsShortcuts() {
   document.addEventListener('keydown', (e: KeyboardEvent) => {
-    // ALLOW zoom shortcuts: Ctrl/Cmd + '+' / '-' / '=' / '0'
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
-      if (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0'
-          || e.code === 'Equal' || e.code === 'Minus' || e.code === 'Digit0'
-          || e.code === 'NumpadAdd' || e.code === 'NumpadSubtract') {
-        return; // Let zoom through
-      }
-    }
-
     // F12
     if (e.key === 'F12') {
       e.preventDefault();
@@ -80,41 +95,64 @@ function blockContextMenu() {
   }, true);
 }
 
+// ── Detection helpers (started after grace period) ──────────────────
+
+/** Record one positive detection signal */
+function recordHit() {
+  if (alreadyTriggered || !detectionActive) return;
+  consecutiveHits++;
+  if (consecutiveHits >= CONSECUTIVE_HITS_NEEDED) {
+    handleDevToolsDetected();
+  }
+}
+
+/** Reset the counter when a probe comes back clean */
+function recordClean() {
+  consecutiveHits = 0;
+}
+
 /**
- * Detect DevTools via window size difference (docked DevTools)
- * When DevTools is docked, outerWidth/outerHeight differs significantly from innerWidth/innerHeight
+ * Detect DevTools via window size difference (docked DevTools).
+ * When DevTools is docked, outerWidth/outerHeight differs significantly
+ * from innerWidth/innerHeight.
  */
 function detectDevToolsBySize() {
-  const threshold = 160; // pixels
+  const threshold = 200; // pixels – generous to avoid false positives
 
   const check = () => {
+    if (!detectionActive || alreadyTriggered) return;
+
     const widthDiff = window.outerWidth - window.innerWidth;
     const heightDiff = window.outerHeight - window.innerHeight;
 
     if (widthDiff > threshold || heightDiff > threshold) {
-      handleDevToolsDetected();
+      recordHit();
+    } else {
+      recordClean();
     }
   };
 
-  // Check periodically
   setInterval(check, 1000);
   window.addEventListener('resize', check);
 }
 
 /**
- * Detect DevTools via debugger timing
- * The debugger statement causes a significant delay when DevTools is open
+ * Detect DevTools via debugger timing.
+ * The debugger statement causes a significant delay when DevTools is open.
  */
 function detectDevToolsByDebugger() {
   const check = () => {
+    if (!detectionActive || alreadyTriggered) return;
+
     const start = performance.now();
     // eslint-disable-next-line no-debugger
     debugger;
     const end = performance.now();
 
-    // If the debugger statement took more than 100ms, DevTools is likely open
     if (end - start > 100) {
-      handleDevToolsDetected();
+      recordHit();
+    } else {
+      recordClean();
     }
   };
 
@@ -122,8 +160,8 @@ function detectDevToolsByDebugger() {
 }
 
 /**
- * Detect DevTools via console property access
- * Overriding toString on objects logged to console triggers when DevTools is open
+ * Detect DevTools via console property access.
+ * A getter on a logged object is invoked only when the console is rendering.
  */
 function detectDevToolsByConsole() {
   const element = new Image();
@@ -132,47 +170,59 @@ function detectDevToolsByConsole() {
   Object.defineProperty(element, 'id', {
     get: () => {
       devToolsOpen = true;
-      handleDevToolsDetected();
       return '';
     },
   });
 
   setInterval(() => {
+    if (!detectionActive || alreadyTriggered) return;
     devToolsOpen = false;
     console.log('%c', element as any);
     if (devToolsOpen) {
-      handleDevToolsDetected();
+      recordHit();
+    } else {
+      recordClean();
     }
   }, 2000);
 }
 
+// ── Response ────────────────────────────────────────────────────────
+
 /**
- * Handle DevTools detection — kill this tab only.
- * No localStorage / sessionStorage / cookies are written,
- * so opening a new tab works perfectly fine.
+ * Handle DevTools detection – close / redirect the page.
+ * No overlay is shown (overlays can be removed via DevTools).
  */
 function handleDevToolsDetected() {
-  // Only run once per tab to avoid loops
   if (alreadyTriggered) return;
   alreadyTriggered = true;
 
-  // Replace current history entry so the back button can't return here
-  // then navigate to about:blank — affects only this tab
+  // Clear the page content
+  document.documentElement.innerHTML = '';
+
+  // Try to close the window
+  window.close();
+
+  // If window.close() doesn't work (most browsers block it for
+  // non-popup windows), redirect to a blank page.
+  setTimeout(() => {
+    window.location.href = REDIRECT_URL;
+  }, 100);
+
+  // Final fallback – overwrite the document
   try {
-    window.location.replace('about:blank');
+    document.write('');
+    document.close();
   } catch {
-    // Fallback: hard redirect
-    window.location.href = 'about:blank';
+    // Ignore errors
   }
 }
 
 /**
- * Disable console methods to prevent inspection
+ * Disable console methods to prevent inspection.
  */
 function disableConsole() {
   const noop = () => {};
 
-  // Only disable in production
   if (import.meta.env.PROD) {
     Object.keys(console).forEach((key) => {
       (console as any)[key] = noop;
@@ -180,21 +230,36 @@ function disableConsole() {
   }
 }
 
+// ── Public API ──────────────────────────────────────────────────────
+
 /**
- * Initialize all DevTools blocking mechanisms
- * Only activates in production mode
+ * Initialize all DevTools blocking mechanisms.
+ * Only activates in production mode.
+ *
+ * - Shortcuts & context-menu blocking start immediately.
+ * - Detection probes start after a grace period so that a returning
+ *   user (who may have had DevTools open last time) is not instantly
+ *   blocked on a fresh page load.
  */
 export function initDevToolsBlocker() {
-  // Only block in production
   if (!import.meta.env.PROD) {
     console.log('[DevTools Blocker] Disabled in development mode');
     return;
   }
 
+  // Immediate blocking (no grace period needed)
   blockDevToolsShortcuts();
   blockContextMenu();
-  detectDevToolsBySize();
-  detectDevToolsByDebugger();
-  detectDevToolsByConsole();
   disableConsole();
+
+  // Start detection probes only after the grace period.
+  // This gives the browser time to settle and lets a returning user
+  // load the page normally even if DevTools was previously remembered.
+  setTimeout(() => {
+    detectionActive = true;
+
+    detectDevToolsBySize();
+    detectDevToolsByDebugger();
+    detectDevToolsByConsole();
+  }, GRACE_MS);
 }
