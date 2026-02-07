@@ -90,49 +90,49 @@ const SearchPage: React.FC = () => {
   const hasResults = movies.length > 0 || tvShows.length > 0 || people.length > 0;
 
   return (
-    <div className="min-h-screen pt-8">
+    <div className="min-h-screen pt-4 sm:pt-8">
       <div className="container-padding">
         {/* Search Header */}
-        <div className="max-w-3xl mx-auto mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">
+        <div className="max-w-3xl mx-auto mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8">
             Search
           </h1>
 
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-text-muted" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for movies, TV shows, people..."
-              className="w-full pl-12 pr-12 py-4 bg-surface border border-surface rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Search movies, TV shows..."
+              className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 bg-surface border border-surface rounded-xl text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               autoFocus
             />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
+                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
           </div>
 
           {/* Category Tabs */}
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 overflow-x-auto scrollbar-hide pb-2">
             {categories.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 onClick={() => setCategory(value)}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap',
                   category === value
                     ? 'bg-primary text-white'
                     : 'bg-surface text-text-secondary hover:text-white'
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {label}
               </button>
             ))}
@@ -141,7 +141,7 @@ const SearchPage: React.FC = () => {
 
         {/* Loading State */}
         {(isLoading || isFetching) && debouncedQuery && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-[2/3] bg-surface rounded-lg animate-pulse" />
             ))}
@@ -181,12 +181,12 @@ const SearchPage: React.FC = () => {
             {/* Movies */}
             {movies.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <Film className="w-6 h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <Film className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   Movies
                   <Badge variant="default">{movies.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                   {movies.map((item: MediaItem) => (
                     <MediaCard
                       key={item.id}
@@ -200,12 +200,12 @@ const SearchPage: React.FC = () => {
             {/* TV Shows */}
             {tvShows.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <Tv className="w-6 h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <Tv className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   TV Shows
                   <Badge variant="default">{tvShows.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                   {tvShows.map((item: MediaItem) => (
                     <MediaCard
                       key={item.id}
@@ -219,12 +219,12 @@ const SearchPage: React.FC = () => {
             {/* People */}
             {people.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <User className="w-6 h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   People
                   <Badge variant="default">{people.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                   {people.map((person: any) => (
                     <motion.div
                       key={person.id}
@@ -241,14 +241,14 @@ const SearchPage: React.FC = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-12 h-12 text-text-muted" />
+                            <User className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted" />
                           </div>
                         )}
                       </div>
-                      <p className="font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                      <p className="font-medium text-xs sm:text-base line-clamp-1 group-hover:text-primary transition-colors">
                         {person.name}
                       </p>
-                      <p className="text-sm text-text-muted line-clamp-1">
+                      <p className="text-xs sm:text-sm text-text-muted line-clamp-1">
                         {person.knownFor}
                       </p>
                     </motion.div>

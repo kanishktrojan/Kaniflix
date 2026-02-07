@@ -70,7 +70,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           )}
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
         >
           <Image
@@ -129,7 +129,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
         )}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
-        whileHover={{ scale: 1.05, zIndex: 10 }}
+        whileHover={{ scale: 1.02, zIndex: 10 }}
         transition={{ duration: 0.3 }}
       >
         <Image

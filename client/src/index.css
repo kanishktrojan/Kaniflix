@@ -156,7 +156,7 @@
   }
 
   .card-hover {
-    @apply hover:scale-105 hover:z-10 cursor-pointer;
+    @apply hover:scale-[1.02] hover:z-10 cursor-pointer;
   }
 
   /* Input styles */

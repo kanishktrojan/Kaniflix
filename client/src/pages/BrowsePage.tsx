@@ -86,41 +86,41 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
   const title = mediaType === 'movie' ? 'Movies' : 'TV Shows';
 
   return (
-    <div className="min-h-screen pt-8">
+    <div className="min-h-screen pt-4 sm:pt-8">
       <div className="container-padding">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
               {selectedGenre ? `${selectedGenre.name} ${title}` : title}
             </h1>
             {data?.total_results && (
-              <p className="text-text-muted mt-1">
+              <p className="text-text-muted mt-1 text-sm sm:text-base">
                 {data.total_results.toLocaleString()} titles
               </p>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* View Mode Toggle */}
             <div className="flex bg-surface rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  'p-2 rounded transition-colors',
+                  'p-1.5 sm:p-2 rounded transition-colors',
                   viewMode === 'grid' ? 'bg-white/10' : 'hover:bg-white/5'
                 )}
               >
-                <Grid className="w-5 h-5" />
+                <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  'p-2 rounded transition-colors',
+                  'p-1.5 sm:p-2 rounded transition-colors',
                   viewMode === 'list' ? 'bg-white/10' : 'hover:bg-white/5'
                 )}
               >
-                <List className="w-5 h-5" />
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
@@ -128,7 +128,7 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
             <select
               value={sortParam}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="bg-surface border border-surface rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="bg-surface border border-surface rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary flex-1 sm:flex-none max-w-[150px] sm:max-w-none"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -189,10 +189,10 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
         )}
 
         {/* Genre Pills (Mobile) */}
-        <div className="md:hidden mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="md:hidden mb-4 sm:mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             className={cn(
-              'flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors',
+              'flex-shrink-0 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors',
               !genreParam ? 'bg-primary text-white' : 'bg-surface hover:bg-white/10'
             )}
             onClick={() => handleGenreChange(null)}
@@ -203,7 +203,7 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
             <button
               key={genre.id}
               className={cn(
-                'flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                'flex-shrink-0 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors',
                 parseInt(genreParam || '') === genre.id ? 'bg-primary text-white' : 'bg-surface hover:bg-white/10'
               )}
               onClick={() => handleGenreChange(genre.id)}
@@ -216,9 +216,9 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
         {/* Content Grid */}
         {isLoading ? (
           <div className={cn(
-            'grid gap-4',
+            'grid gap-2 sm:gap-4',
             viewMode === 'grid'
-              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+              ? 'grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
               : 'grid-cols-1'
           )}>
             {Array.from({ length: 18 }).map((_, i) => (
@@ -230,9 +230,9 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={cn(
-              'grid gap-4',
+              'grid gap-2 sm:gap-4',
               viewMode === 'grid'
-                ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                ? 'grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                 : 'grid-cols-1'
             )}
           >

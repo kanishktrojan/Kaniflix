@@ -143,7 +143,7 @@ const MyListPage: React.FC = () => {
   const tvShows = items.filter((item) => item.mediaType === 'tv');
 
   return (
-    <div className="min-h-screen pt-8">
+    <div className="min-h-screen pt-4 sm:pt-8">
       {/* Video Player Modal with Progress Tracking */}
       {playingItem && (
         <VideoModal
@@ -163,16 +163,16 @@ const MyListPage: React.FC = () => {
 
       <div className="container-padding">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">My List</h1>
-          <p className="text-text-muted">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">My List</h1>
+          <p className="text-text-muted text-sm sm:text-base">
             {items.length} titles saved
           </p>
         </div>
 
         {/* Loading */}
         {isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-[2/3] bg-surface animate-pulse rounded-md" />
             ))}
@@ -200,33 +200,33 @@ const MyListPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="space-y-12"
+            className="space-y-8 sm:space-y-12"
           >
             {/* Movies */}
             {movies.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <Film className="w-6 h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <Film className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   Movies
                   <Badge variant="default">{movies.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                   {movies.map((item) => (
                     <div key={item._id} className="relative group">
                       <MediaCard item={toMediaItem(item)} />
                       {/* Quick Actions */}
-                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <button
                           onClick={(e) => handlePlay(item, e)}
-                          className="p-2 bg-primary rounded-full hover:bg-primary-hover transition-colors"
+                          className="p-1.5 sm:p-2 bg-primary rounded-full hover:bg-primary-hover transition-colors"
                         >
-                          <Play className="w-4 h-4" fill="white" />
+                          <Play className="w-3 h-3 sm:w-4 sm:h-4" fill="white" />
                         </button>
                         <button
                           onClick={(e) => handleRemove(item, e)}
-                          className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                          className="p-1.5 sm:p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>
@@ -238,28 +238,28 @@ const MyListPage: React.FC = () => {
             {/* TV Shows */}
             {tvShows.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <Tv className="w-6 h-6 text-primary" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
+                  <Tv className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   TV Shows
                   <Badge variant="default">{tvShows.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
                   {tvShows.map((item) => (
                     <div key={item._id} className="relative group">
                       <MediaCard item={toMediaItem(item)} />
                       {/* Quick Actions */}
-                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <button
                           onClick={(e) => handlePlay(item, e)}
-                          className="p-2 bg-primary rounded-full hover:bg-primary-hover transition-colors"
+                          className="p-1.5 sm:p-2 bg-primary rounded-full hover:bg-primary-hover transition-colors"
                         >
-                          <Play className="w-4 h-4" fill="white" />
+                          <Play className="w-3 h-3 sm:w-4 sm:h-4" fill="white" />
                         </button>
                         <button
                           onClick={(e) => handleRemove(item, e)}
-                          className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                          className="p-1.5 sm:p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>

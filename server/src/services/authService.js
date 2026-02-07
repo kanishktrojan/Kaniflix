@@ -460,18 +460,19 @@ class AuthService {
    * Get cookie options
    */
   getCookieOptions(isRefreshToken = false) {
+    const isProduction = config.NODE_ENV === 'production';
     const baseOptions = {
       httpOnly: true,
-      secure: config.COOKIE_SECURE,
-      sameSite: 'lax',
-      domain: config.NODE_ENV === 'production' ? config.COOKIE_DOMAIN : undefined
+      secure: isProduction || config.COOKIE_SECURE,
+      sameSite: isProduction ? 'none' : 'lax',
+      domain: isProduction ? config.COOKIE_DOMAIN : undefined
     };
 
     if (isRefreshToken) {
       return {
         ...baseOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/api/auth/refresh'
+        path: '/'
       };
     }
 
@@ -479,6 +480,28 @@ class AuthService {
       ...baseOptions,
       maxAge: 15 * 60 * 1000 // 15 minutes
     };
+  }
+
+  /**
+   * Get clear cookie options (must match setCookie options for browser to clear them)
+   */
+  getClearCookieOptions(isRefreshToken = false) {
+    const isProduction = config.NODE_ENV === 'production';
+    const baseOptions = {
+      httpOnly: true,
+      secure: isProduction || config.COOKIE_SECURE,
+      sameSite: isProduction ? 'none' : 'lax',
+      domain: isProduction ? config.COOKIE_DOMAIN : undefined
+    };
+
+    if (isRefreshToken) {
+      return {
+        ...baseOptions,
+        path: '/'
+      };
+    }
+
+    return baseOptions;
   }
 }
 

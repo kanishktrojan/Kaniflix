@@ -207,7 +207,7 @@ const MovieDetailsPage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <div className="relative h-[85vh] md:h-[90vh]">
+      <div className="relative h-[75vh] sm:h-[80vh] md:h-[90vh]">
         {/* Backdrop */}
         <div className="absolute inset-0">
           <Image
@@ -229,9 +229,8 @@ const MovieDetailsPage: React.FC = () => {
         />
 
         {/* Content - positioned from bottom like Netflix */}
-        <div className="absolute bottom-[8%] md:bottom-[10%] left-0 right-0 px-6 md:px-12 lg:px-16">
-          <div className="container-padding">
-            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-end">
+        <div className="absolute bottom-[5%] sm:bottom-[8%] md:bottom-[10%] left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-16">
+            <div className="flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8 items-start md:items-end">
               {/* Poster */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -255,40 +254,40 @@ const MovieDetailsPage: React.FC = () => {
                 {/* Title - Dynamic sizing based on length */}
                 <h1
                   className={cn(
-                    'font-bold mb-4 leading-tight',
+                    'font-bold mb-3 sm:mb-4 leading-tight',
                     movie.title.length > 30
-                      ? 'text-2xl md:text-3xl lg:text-4xl'
+                      ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
                       : movie.title.length > 20
-                        ? 'text-3xl md:text-4xl lg:text-5xl'
-                        : 'text-4xl md:text-5xl lg:text-6xl'
+                        ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+                        : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'
                   )}
                 >
                   {movie.title}
                 </h1>
 
                 {/* Metadata */}
-                <div className="flex flex-wrap items-center gap-4 mb-6 text-text-secondary">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6 text-text-secondary text-sm">
                   {/* Rating */}
                   <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 text-yellow-500" fill="currentColor" />
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" fill="currentColor" />
                     <span className="font-medium text-white">
                       {movie.voteAverage?.toFixed(1)}
                     </span>
-                    <span className="text-sm">
+                    <span className="text-xs sm:text-sm hidden sm:inline">
                       ({movie.voteCount?.toLocaleString()} votes)
                     </span>
                   </div>
 
                   {/* Year */}
                   <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>{movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A'}</span>
                   </div>
 
                   {/* Runtime */}
                   {movie.runtime && (
                     <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>{formatRuntime(movie.runtime)}</span>
                     </div>
                   )}
@@ -298,7 +297,7 @@ const MovieDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Genres */}
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">
                   {movie.genres?.map((genre) => (
                     <Badge key={genre.id} variant="genre">
                       {genre.name}
@@ -308,13 +307,13 @@ const MovieDetailsPage: React.FC = () => {
 
                 {/* Tagline */}
                 {movie.tagline && (
-                  <p className="text-lg italic text-text-secondary mb-4">
+                  <p className="text-sm sm:text-lg italic text-text-secondary mb-3 sm:mb-4">
                     "{movie.tagline}"
                   </p>
                 )}
 
                 {/* Overview - max 3 lines */}
-                <p className="text-lg text-text-secondary mb-8 line-clamp-3">
+                <p className="text-sm sm:text-lg text-text-secondary mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-3">
                   {movie.overview}
                 </p>
 
@@ -325,9 +324,9 @@ const MovieDetailsPage: React.FC = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="flex flex-wrap gap-4"
+                      className="flex flex-wrap gap-2 sm:gap-4"
                     >
-                      <Button size="lg" onClick={handlePlay} className="px-8">
+                      <Button size="lg" onClick={handlePlay} className="px-4 sm:px-8 text-sm sm:text-base">
                         <Play className="w-5 h-5 mr-2" fill="white" />
                         Play
                       </Button>
@@ -376,7 +375,6 @@ const MovieDetailsPage: React.FC = () => {
                 </AnimatePresence>
               </motion.div>
             </div>
-          </div>
         </div>
       </div>
 

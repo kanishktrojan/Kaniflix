@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AnimatePresence } from 'framer-motion';
 import { AppRouter } from '@/router';
 import { useAuthStore } from '@/store';
+import { authService } from '@/services';
 import { wakeUpBackend, startBackendKeepAlive, stopBackendKeepAlive } from '@/utils';
 import { PWANotifications, InstallPrompt, SplashScreen } from '@/components/ui';
 import { useStandaloneMode } from '@/hooks/usePWA';
@@ -47,6 +48,24 @@ const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
   React.useEffect(() => {
     if (isAuthenticated) {
       startBackendKeepAlive(10 * 60 * 1000); // Ping every 10 minutes
+      
+      // Proactive token refresh - refresh token 2 minutes before it expires (15min expiry)
+      // This prevents the user from being logged out unexpectedly
+      const tokenRefreshInterval = setInterval(async () => {
+        if (authService.hasToken()) {
+          try {
+            await authService.refreshToken();
+            console.log('🔄 Token refreshed proactively');
+          } catch (error) {
+            console.error('Failed to refresh token proactively:', error);
+          }
+        }
+      }, 13 * 60 * 1000); // Refresh every 13 minutes (2 min before 15min expiry)
+
+      return () => {
+        stopBackendKeepAlive();
+        clearInterval(tokenRefreshInterval);
+      };
     } else {
       stopBackendKeepAlive();
     }

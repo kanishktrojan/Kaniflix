@@ -433,7 +433,7 @@ const HomePage: React.FC = () => {
       {/* Hero Banner - Full width, Netflix style */}
       <div className="relative">
         {trendingLoading ? (
-          <div className="h-[56.25vw] min-h-[400px] max-h-[100vh] bg-[#141414] animate-pulse" />
+          <div className="h-[70vw] sm:h-[56.25vw] min-h-[320px] sm:min-h-[400px] max-h-[80vh] lg:max-h-[90vh] bg-[#141414] animate-pulse" />
         ) : featuredContent ? (
           <HeroBanner
             item={featuredContent}
@@ -445,7 +445,7 @@ const HomePage: React.FC = () => {
 
         {/* Hero indicator dots - Netflix style */}
         {heroItems.length > 1 && (
-          <div className="absolute bottom-[30%] right-4 md:right-12 lg:right-16 flex flex-col gap-1">
+          <div className="absolute bottom-[18%] sm:bottom-[28%] md:bottom-[30%] right-4 md:right-12 lg:right-16 flex flex-col gap-1">
             {heroItems.map((_, idx) => (
               <button
                 key={idx}
@@ -459,7 +459,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Content Rows - Netflix style with overlapping hero */}
-      <div className="relative z-10 -mt-[10vw] pb-12 space-y-6 md:space-y-8">
+      <div className="relative z-10 -mt-8 sm:-mt-[8vw] md:-mt-[10vw] pb-12 space-y-4 sm:space-y-6 md:space-y-8">
         {/* Continue Watching - Only show for authenticated users with history */}
         {isAuthenticated && continueWatchingItems.length > 0 && (
           <MediaRow

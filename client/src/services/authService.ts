@@ -1,4 +1,5 @@
 import api from './api';
+import { startProactiveRefresh, stopProactiveRefresh } from './api';
 import type {
   User,
   LoginCredentials,
@@ -34,6 +35,7 @@ export const authService = {
     
     // Store token
     localStorage.setItem('accessToken', response.data.data.accessToken);
+    startProactiveRefresh();
     
     return response.data.data;
   },
@@ -61,6 +63,7 @@ export const authService = {
     
     // Store token
     localStorage.setItem('accessToken', response.data.data.accessToken);
+    startProactiveRefresh();
     
     return response.data.data;
   },
@@ -73,6 +76,7 @@ export const authService = {
       await api.post('/auth/logout');
     } finally {
       localStorage.removeItem('accessToken');
+      stopProactiveRefresh();
     }
   },
 
@@ -84,6 +88,7 @@ export const authService = {
       await api.post('/auth/logout-all');
     } finally {
       localStorage.removeItem('accessToken');
+      stopProactiveRefresh();
     }
   },
 
@@ -109,6 +114,7 @@ export const authService = {
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await api.post('/auth/change-password', { currentPassword, newPassword });
     localStorage.removeItem('accessToken');
+    stopProactiveRefresh();
   },
 
   /**

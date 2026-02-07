@@ -13,6 +13,42 @@ const api = axios.create({
   withCredentials: true, // Include cookies
 });
 
+// ---- Proactive Token Refresh ----
+// Refresh the access token every 12 minutes (before the 15-min expiry)
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+function startProactiveRefresh() {
+  stopProactiveRefresh();
+  refreshTimer = setInterval(async () => {
+    try {
+      const refreshResponse = await axios.post(
+        `${API_BASE_URL}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      );
+      const { accessToken } = refreshResponse.data.data;
+      localStorage.setItem('accessToken', accessToken);
+    } catch {
+      // Refresh failed silently — the 401 interceptor will handle it on next request
+    }
+  }, 12 * 60 * 1000); // 12 minutes
+}
+
+function stopProactiveRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+// Start proactive refresh if user already has a token
+if (localStorage.getItem('accessToken')) {
+  startProactiveRefresh();
+}
+
+// Export helpers for auth service to call on login/logout
+export { startProactiveRefresh, stopProactiveRefresh };
+
 // Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -74,8 +110,9 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - clear auth and redirect to login
+        // Refresh failed - clear auth, stop proactive refresh, and redirect to login
         localStorage.removeItem('accessToken');
+        stopProactiveRefresh();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

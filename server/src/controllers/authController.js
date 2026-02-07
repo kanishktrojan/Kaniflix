@@ -107,9 +107,9 @@ const authController = {
     
     await authService.logout(req.user._id, refreshToken);
     
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+    // Clear cookies with matching options
+    res.clearCookie('accessToken', authService.getClearCookieOptions());
+    res.clearCookie('refreshToken', authService.getClearCookieOptions(true));
     
     ApiResponse.success(res, null, 'Logged out successfully');
   }),
@@ -121,9 +121,9 @@ const authController = {
   logoutAll: asyncHandler(async (req, res) => {
     await authService.logoutAll(req.user._id);
     
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+    // Clear cookies with matching options
+    res.clearCookie('accessToken', authService.getClearCookieOptions());
+    res.clearCookie('refreshToken', authService.getClearCookieOptions(true));
     
     ApiResponse.success(res, null, 'Logged out from all devices');
   }),
@@ -155,9 +155,9 @@ const authController = {
     
     await authService.changePassword(req.user._id, currentPassword, newPassword);
     
-    // Clear cookies (force re-login)
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+    // Clear cookies with matching options (force re-login)
+    res.clearCookie('accessToken', authService.getClearCookieOptions());
+    res.clearCookie('refreshToken', authService.getClearCookieOptions(true));
     
     ApiResponse.success(res, null, 'Password changed successfully. Please login again.');
   }),

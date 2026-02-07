@@ -64,8 +64,16 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const { user } = await authService.checkAuth();
           set({ user, isAuthenticated: true, isLoading: false });
-        } catch {
-          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (error) {
+          // First attempt failed - try to refresh token and check again
+          try {
+            await authService.refreshToken();
+            const { user } = await authService.checkAuth();
+            set({ user, isAuthenticated: true, isLoading: false });
+          } catch {
+            // Refresh also failed - user is truly logged out
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          }
         }
       },
 

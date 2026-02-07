@@ -117,7 +117,7 @@ const HeroBannerSlideshow: React.FC<{
 
   return (
     <div
-      className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden"
+      className="relative w-full aspect-[16/10] sm:aspect-[21/9] rounded-2xl overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -158,46 +158,46 @@ const HeroBannerSlideshow: React.FC<{
           </div>
 
           {/* Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <div className="flex items-center gap-2 text-text-secondary text-sm mb-3">
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8">
+            <div className="flex items-center gap-2 text-text-secondary text-xs sm:text-sm mb-2 sm:mb-3">
               <span className="uppercase tracking-wider">{currentEvent.category}</span>
               {currentEvent.tournament && (
                 <>
                   <span>•</span>
-                  <span>{currentEvent.tournament}</span>
+                  <span className="truncate">{currentEvent.tournament}</span>
                 </>
               )}
             </div>
 
             {/* Teams */}
             {currentEvent.team1?.name && currentEvent.team2?.name ? (
-              <div className="flex items-center gap-4 md:gap-8 mb-4">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-4 md:gap-8 mb-3 sm:mb-4">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {currentEvent.team1.logo && (
-                    <img src={currentEvent.team1.logo} alt={currentEvent.team1.name} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                    <img src={currentEvent.team1.logo} alt={currentEvent.team1.name} className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 object-contain" />
                   )}
                   <div>
-                    <p className="text-white font-bold text-xl md:text-2xl">{currentEvent.team1.name}</p>
+                    <p className="text-white font-bold text-sm sm:text-xl md:text-2xl">{currentEvent.team1.name}</p>
                     {currentEvent.isLive && currentEvent.team1.score && (
-                      <p className="text-2xl md:text-3xl font-bold text-primary">{currentEvent.team1.score}</p>
+                      <p className="text-lg sm:text-2xl md:text-3xl font-bold text-primary">{currentEvent.team1.score}</p>
                     )}
                   </div>
                 </div>
-                <div className="text-text-secondary text-xl font-medium">VS</div>
-                <div className="flex items-center gap-3">
+                <div className="text-text-secondary text-sm sm:text-xl font-medium">VS</div>
+                <div className="flex items-center gap-2 sm:gap-3">
                   {currentEvent.team2.logo && (
-                    <img src={currentEvent.team2.logo} alt={currentEvent.team2.name} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+                    <img src={currentEvent.team2.logo} alt={currentEvent.team2.name} className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 object-contain" />
                   )}
                   <div>
-                    <p className="text-white font-bold text-xl md:text-2xl">{currentEvent.team2.name}</p>
+                    <p className="text-white font-bold text-sm sm:text-xl md:text-2xl">{currentEvent.team2.name}</p>
                     {currentEvent.isLive && currentEvent.team2.score && (
-                      <p className="text-2xl md:text-3xl font-bold text-primary">{currentEvent.team2.score}</p>
+                      <p className="text-lg sm:text-2xl md:text-3xl font-bold text-primary">{currentEvent.team2.score}</p>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">{currentEvent.title}</h2>
+              <h2 className="text-lg sm:text-2xl md:text-4xl font-bold text-white mb-3 sm:mb-4">{currentEvent.title}</h2>
             )}
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -226,11 +226,11 @@ const HeroBannerSlideshow: React.FC<{
 
             {/* Watch Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="mt-3 sm:mt-4 inline-flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors text-sm sm:text-base"
             >
-              <Play className="w-5 h-5 fill-current" />
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               {currentEvent.isLive ? 'Watch Live' : 'View Details'}
             </motion.button>
           </div>
@@ -274,24 +274,11 @@ const HeroBannerSlideshow: React.FC<{
               className={cn(
                 'transition-all duration-300',
                 index === currentIndex
-                  ? 'w-8 h-2 bg-primary rounded-full'
+                  ? 'w-8 h-2 bg-white rounded-full'
                   : 'w-2 h-2 bg-white/50 hover:bg-white/80 rounded-full'
               )}
             />
           ))}
-        </div>
-      )}
-
-      {/* Progress Bar */}
-      {events.length > 1 && !isPaused && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-          <motion.div
-            key={currentIndex}
-            initial={{ width: '0%' }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 5, ease: 'linear' }}
-            className="h-full bg-primary"
-          />
         </div>
       )}
     </div>
@@ -310,14 +297,14 @@ const SportsCard: React.FC<{
   if (variant === 'featured') {
     return (
       <motion.div
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.01 }}
         onClick={onClick}
         className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden cursor-pointer group"
       >
         <img
           src={event.banner || event.thumbnail}
           alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
         
@@ -427,7 +414,7 @@ const SportsCard: React.FC<{
   // Default Card
   return (
     <motion.div
-      whileHover={{ scale: 1.03, y: -5 }}
+      whileHover={{ scale: 1.02, y: -3 }}
       onClick={onClick}
       className={cn(
         'relative rounded-xl overflow-hidden cursor-pointer group bg-surface-dark',
@@ -442,7 +429,7 @@ const SportsCard: React.FC<{
         <img
           src={event.thumbnail}
           alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         
@@ -660,10 +647,10 @@ const HorizontalSection: React.FC<{
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4"
+          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4"
         >
           {events.map((event) => (
-            <div key={event._id} className="w-72 md:w-80 flex-shrink-0">
+            <div key={event._id} className="w-64 sm:w-72 md:w-80 flex-shrink-0">
               <SportsCard event={event} onClick={() => onEventClick(event._id)} />
             </div>
           ))}

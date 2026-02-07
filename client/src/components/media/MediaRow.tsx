@@ -118,7 +118,7 @@ export const MediaRow: React.FC<MediaRowProps> = ({
                 onRemove={onRemove}
                 className={cn(
                   'flex-shrink-0',
-                  variant === 'continue' && 'w-[300px]'
+                  variant === 'continue' && 'w-[260px] sm:w-[280px] md:w-[300px]'
                 )}
               />
             ) : (
@@ -132,8 +132,8 @@ export const MediaRow: React.FC<MediaRowProps> = ({
                 onRemoveFromWatchlist={() => onRemoveFromWatchlist?.(item)}
                 className={cn(
                   'flex-shrink-0',
-                  variant === 'poster' && 'w-[140px] md:w-[180px]',
-                  variant === 'backdrop' && 'w-[280px] md:w-[300px]'
+                  variant === 'poster' && 'w-[120px] sm:w-[140px] md:w-[180px]',
+                  variant === 'backdrop' && 'w-[240px] sm:w-[280px] md:w-[300px]'
                 )}
               />
             )
