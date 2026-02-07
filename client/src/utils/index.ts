@@ -344,3 +344,5 @@ export const stopBackendKeepAlive = (): void => {
     console.log('[Backend] Keep-alive stopped');
   }
 };
+
+export { initDevToolsBlocker } from './devToolsBlocker';

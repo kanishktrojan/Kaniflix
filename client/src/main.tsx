@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { initDevToolsBlocker } from './utils/devToolsBlocker';
+
+// Initialize DevTools protection (production only)
+initDevToolsBlocker();
 
 // Register service worker for PWA
 const registerServiceWorker = async () => {
