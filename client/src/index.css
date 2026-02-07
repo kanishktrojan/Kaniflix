@@ -448,7 +448,7 @@ body.modal-open:not(.kaniflix-modal) {
 @media (max-width: 768px) {
 
   /* Larger touch targets on mobile */
-  button,
+  button:not(.slide-dot),
   a,
   [role="button"] {
     min-height: 44px;

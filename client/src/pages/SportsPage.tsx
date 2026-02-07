@@ -263,7 +263,7 @@ const HeroBannerSlideshow: React.FC<{
 
       {/* Slide Indicators */}
       {events.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-10">
           {events.map((_, index) => (
             <button
               key={index}
@@ -272,10 +272,10 @@ const HeroBannerSlideshow: React.FC<{
                 goToSlide(index);
               }}
               className={cn(
-                'transition-all duration-300',
+                'slide-dot transition-all duration-300 rounded-full !min-h-0',
                 index === currentIndex
-                  ? 'w-8 h-2 bg-white rounded-full'
-                  : 'w-2 h-2 bg-white/50 hover:bg-white/80 rounded-full'
+                  ? 'w-3 h-1 sm:w-8 sm:h-2 bg-primary'
+                  : 'w-1 h-1 sm:w-2 sm:h-2 bg-white/50 hover:bg-white/80'
               )}
             />
           ))}
