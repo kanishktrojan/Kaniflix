@@ -1,16 +1,30 @@
 /**
  * DevTools Blocker Utility
  * Prevents users from opening browser Developer Tools
- * and closes/redirects the page if they manage to open it.
+ * and redirects the current tab to about:blank if they manage to open it.
+ * 
+ * NOTE: This only kills the current tab. The user can open a new tab
+ * and access the website normally — no persistent blocking.
  */
 
-const REDIRECT_URL = 'about:blank';
+// Guard so we only fire the redirect once per tab
+let alreadyTriggered = false;
 
 /**
  * Block keyboard shortcuts that open DevTools
+ * Exception: Ctrl+'+' / Ctrl+'-' (zoom) are explicitly allowed
  */
 function blockDevToolsShortcuts() {
   document.addEventListener('keydown', (e: KeyboardEvent) => {
+    // ALLOW zoom shortcuts: Ctrl/Cmd + '+' / '-' / '=' / '0'
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+      if (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0'
+          || e.code === 'Equal' || e.code === 'Minus' || e.code === 'Digit0'
+          || e.code === 'NumpadAdd' || e.code === 'NumpadSubtract') {
+        return; // Let zoom through
+      }
+    }
+
     // F12
     if (e.key === 'F12') {
       e.preventDefault();
@@ -133,27 +147,22 @@ function detectDevToolsByConsole() {
 }
 
 /**
- * Handle DevTools detection - close/redirect the page
+ * Handle DevTools detection — kill this tab only.
+ * No localStorage / sessionStorage / cookies are written,
+ * so opening a new tab works perfectly fine.
  */
 function handleDevToolsDetected() {
-  // Clear the page content
-  document.documentElement.innerHTML = '';
+  // Only run once per tab to avoid loops
+  if (alreadyTriggered) return;
+  alreadyTriggered = true;
 
-  // Try to close the window
-  window.close();
-
-  // If window.close() doesn't work (most browsers block it for non-popup windows),
-  // redirect to blank page
-  setTimeout(() => {
-    window.location.href = REDIRECT_URL;
-  }, 100);
-
-  // As a final fallback, replace the entire document
+  // Replace current history entry so the back button can't return here
+  // then navigate to about:blank — affects only this tab
   try {
-    document.write('');
-    document.close();
+    window.location.replace('about:blank');
   } catch {
-    // Ignore errors
+    // Fallback: hard redirect
+    window.location.href = 'about:blank';
   }
 }
 
@@ -162,7 +171,7 @@ function handleDevToolsDetected() {
  */
 function disableConsole() {
   const noop = () => {};
-  
+
   // Only disable in production
   if (import.meta.env.PROD) {
     Object.keys(console).forEach((key) => {
@@ -188,6 +197,4 @@ export function initDevToolsBlocker() {
   detectDevToolsByDebugger();
   detectDevToolsByConsole();
   disableConsole();
-
-  console.log('[DevTools Blocker] Protection active');
 }
