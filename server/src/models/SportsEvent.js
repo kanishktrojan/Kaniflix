@@ -207,12 +207,17 @@ sportsEventSchema.virtual('timeUntilStart').get(function() {
   return diff > 0 ? diff : 0;
 });
 
-// Pre-save middleware to update status based on isLive
+// Pre-save middleware to update status based on isLive and endedAt
 sportsEventSchema.pre('save', function(next) {
   if (this.isModified('isLive')) {
     if (this.isLive) {
       this.status = 'live';
     }
+  }
+  // Auto-mark as ended if endedAt is set and has passed
+  if (this.endedAt && new Date(this.endedAt) <= new Date() && this.status !== 'cancelled') {
+    this.status = 'ended';
+    this.isLive = false;
   }
   next();
 });

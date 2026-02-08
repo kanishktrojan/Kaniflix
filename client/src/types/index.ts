@@ -530,6 +530,7 @@ export interface CreateSportsEventRequest {
   isLive?: boolean;
   status?: SportsEventStatus;
   scheduledAt: string;
+  endedAt?: string | null;
   streamUrl: string;
   useProxy?: boolean;
   drmEnabled?: boolean;
@@ -541,9 +542,7 @@ export interface CreateSportsEventRequest {
   isFeatured?: boolean;
 }
 
-export interface UpdateSportsEventRequest extends Partial<CreateSportsEventRequest> {
-  endedAt?: string;
-}
+export interface UpdateSportsEventRequest extends Partial<CreateSportsEventRequest> {}
 
 export interface BulkUpdateSportsRequest {
   eventIds: string[];

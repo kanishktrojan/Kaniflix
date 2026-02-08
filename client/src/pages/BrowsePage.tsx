@@ -216,10 +216,9 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
         {/* Content Grid */}
         {isLoading ? (
           <div className={cn(
-            'grid gap-2 sm:gap-4',
             viewMode === 'grid'
-              ? 'grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-              : 'grid-cols-1'
+              ? 'media-card-grid'
+              : 'grid grid-cols-1 gap-2 sm:gap-4'
           )}>
             {Array.from({ length: 18 }).map((_, i) => (
               <div key={i} className="aspect-[2/3] bg-surface rounded-lg animate-pulse" />
@@ -230,10 +229,9 @@ const BrowsePage: React.FC<BrowsePageProps> = ({ mediaType }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={cn(
-              'grid gap-2 sm:gap-4',
               viewMode === 'grid'
-                ? 'grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-                : 'grid-cols-1'
+                ? 'media-card-grid'
+                : 'grid grid-cols-1 gap-2 sm:gap-4'
             )}
           >
             {data?.results.map((item: Movie | TVShow) => (

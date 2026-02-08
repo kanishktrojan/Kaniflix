@@ -63,6 +63,7 @@ interface FormData {
   team2Score: string;
   status: SportsEventStatus;
   scheduledAt: string;
+  endedAt: string;
   streamUrl: string;
   useProxy: boolean;
   drmEnabled: boolean;
@@ -90,6 +91,7 @@ const initialFormData: FormData = {
   team2Score: '',
   status: 'upcoming',
   scheduledAt: '',
+  endedAt: '',
   streamUrl: '',
   useProxy: false,
   drmEnabled: false,
@@ -155,6 +157,9 @@ const AdminSports: React.FC = () => {
         status: editingEvent.status,
         scheduledAt: editingEvent.scheduledAt
           ? new Date(editingEvent.scheduledAt).toISOString().slice(0, 16)
+          : '',
+        endedAt: editingEvent.endedAt
+          ? new Date(editingEvent.endedAt).toISOString().slice(0, 16)
           : '',
         streamUrl: editingEvent.streamUrl || '',
         useProxy: editingEvent.useProxy || false,
@@ -239,6 +244,7 @@ const AdminSports: React.FC = () => {
       status: formData.status,
       isLive: formData.status === 'live',
       scheduledAt: formData.scheduledAt,
+      endedAt: formData.endedAt || null,
       streamUrl: formData.streamUrl,
       useProxy: formData.useProxy,
       drmEnabled: formData.drmEnabled,
@@ -787,6 +793,27 @@ const AdminSports: React.FC = () => {
                         required
                         className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-text-secondary mb-1">
+                        End Date & Time <span className="text-white/40">(Optional - auto-ends stream)</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="endedAt"
+                        value={formData.endedAt}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
+                      />
+                      {formData.endedAt && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, endedAt: '' })}
+                          className="text-xs text-red-400 hover:text-red-300 mt-1"
+                        >
+                          Clear end date
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

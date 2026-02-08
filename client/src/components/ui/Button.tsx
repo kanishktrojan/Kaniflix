@@ -21,10 +21,10 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'px-4 py-2 text-sm',
-  md: 'px-6 py-3 text-base',
-  lg: 'px-8 py-4 text-lg',
-  icon: 'p-3',
+  sm: 'px-3 py-1.5 text-sm md:px-4 md:py-2',
+  md: 'px-4 py-2 text-base md:px-5 md:py-2.5',
+  lg: 'px-6 py-3 text-lg md:px-8 md:py-3.5',
+  icon: 'p-2 md:p-2.5',
 };
 
 export const Button: React.FC<ButtonProps> = ({

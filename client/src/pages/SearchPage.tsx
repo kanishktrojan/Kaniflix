@@ -141,9 +141,7 @@ const SearchPage: React.FC = () => {
 
         {/* Loading State */}
         {(isLoading || isFetching) && debouncedQuery && (
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] bg-surface rounded-lg animate-pulse" />
+          <div className="media-card-grid">
             ))}
           </div>
         )}
@@ -186,7 +184,7 @@ const SearchPage: React.FC = () => {
                   Movies
                   <Badge variant="default">{movies.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                <div className="media-card-grid">
                   {movies.map((item: MediaItem) => (
                     <MediaCard
                       key={item.id}
@@ -205,7 +203,7 @@ const SearchPage: React.FC = () => {
                   TV Shows
                   <Badge variant="default">{tvShows.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                <div className="media-card-grid">
                   {tvShows.map((item: MediaItem) => (
                     <MediaCard
                       key={item.id}
@@ -224,7 +222,7 @@ const SearchPage: React.FC = () => {
                   People
                   <Badge variant="default">{people.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                <div className="media-card-grid">
                   {people.map((person: any) => (
                     <motion.div
                       key={person.id}

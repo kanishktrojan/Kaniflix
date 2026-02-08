@@ -205,13 +205,14 @@ const HeroBannerSlideshow: React.FC<{
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-text-secondary" />
                   <span className="text-text-secondary">
-                    {new Date(currentEvent.scheduledAt).toLocaleDateString('en-US', {
+                    {new Date(currentEvent.scheduledAt).toLocaleDateString('en-IN', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
-                    })}
+                      timeZone: 'Asia/Kolkata',
+                    })} IST
                   </span>
                   <CountdownTimer targetDate={currentEvent.scheduledAt} />
                 </div>
@@ -378,13 +379,14 @@ const SportsCard: React.FC<{
               <div className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 text-text-secondary" />
                 <span className="text-text-secondary">
-                  {new Date(event.scheduledAt).toLocaleDateString('en-US', {
+                  {new Date(event.scheduledAt).toLocaleDateString('en-IN', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
-                  })}
+                    timeZone: 'Asia/Kolkata',
+                  })} IST
                 </span>
                 <CountdownTimer targetDate={event.scheduledAt} />
               </div>
@@ -502,11 +504,12 @@ const SportsCard: React.FC<{
           <div className="flex items-center gap-2 text-text-secondary text-sm">
             <Clock className="w-4 h-4" />
             <span>
-              {new Date(event.scheduledAt).toLocaleDateString('en-US', {
+              {new Date(event.scheduledAt).toLocaleDateString('en-IN', {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
+                timeZone: 'Asia/Kolkata',
               })}
             </span>
           </div>
@@ -524,9 +527,10 @@ const SportsCard: React.FC<{
               <>
                 <Calendar className="w-3 h-3" />
                 <span>
-                  {new Date(event.scheduledAt).toLocaleDateString('en-US', {
+                  {new Date(event.scheduledAt).toLocaleDateString('en-IN', {
                     month: 'short',
                     day: 'numeric',
+                    timeZone: 'Asia/Kolkata',
                   })}
                 </span>
               </>

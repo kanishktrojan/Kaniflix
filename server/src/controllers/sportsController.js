@@ -34,7 +34,8 @@ const createSportsEvent = asyncHandler(async (req, res) => {
     venue,
     tournament,
     isActive,
-    isFeatured
+    isFeatured,
+    endedAt
   } = req.body;
 
   // Validate required fields
@@ -62,6 +63,7 @@ const createSportsEvent = asyncHandler(async (req, res) => {
     tournament: tournament || '',
     isActive: isActive !== false,
     isFeatured: isFeatured || false,
+    endedAt: endedAt ? new Date(endedAt) : null,
     createdBy: req.user._id
   });
 
@@ -398,6 +400,13 @@ const getAllSportsEvents = asyncHandler(async (req, res) => {
  * @access Public
  */
 const getLiveEvents = asyncHandler(async (req, res) => {
+  // Auto-end events whose endedAt has passed
+  const now = new Date();
+  await SportsEvent.updateMany(
+    { status: 'live', isLive: true, endedAt: { $ne: null, $lte: now } },
+    { $set: { status: 'ended', isLive: false } }
+  );
+
   const events = await SportsEvent.find({
     isLive: true,
     status: 'live',

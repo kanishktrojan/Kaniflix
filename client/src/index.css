@@ -123,15 +123,15 @@
     @apply px-4 md:px-12 lg:px-16;
   }
 
-  /* Minimum touch target size for accessibility */
+  /* Minimum touch target size for accessibility - mobile only */
   .touch-target {
-    @apply min-h-[44px] min-w-[44px];
+    @apply min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0;
   }
 
   /* Button base */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px];
-    /* Touch-friendly minimum height */
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 md:px-5 md:py-2.5 font-semibold rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] md:min-h-0;
+    /* Touch-friendly minimum height on mobile only */
   }
 
   .btn-primary {
@@ -148,6 +148,32 @@
 
   .btn-icon {
     @apply p-2 rounded-full bg-background-secondary/80 backdrop-blur-sm hover:bg-surface transition-colors duration-200;
+  }
+
+  /* Dynamic media card grid - auto-fills columns based on available width */
+  .media-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .media-card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .media-card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .media-card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
   }
 
   /* Card styles */

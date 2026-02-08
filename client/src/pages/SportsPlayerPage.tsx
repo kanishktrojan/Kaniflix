@@ -600,13 +600,14 @@ const SportsPlayerPage: React.FC = () => {
                       transition={{ delay: 0.2 }}
                       className="text-white/60 mb-8"
                     >
-                      {new Date(currentEvent.scheduledAt).toLocaleDateString('en-US', {
+                      {new Date(currentEvent.scheduledAt).toLocaleDateString('en-IN', {
                         weekday: 'long',
                         month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
-                      })}
+                        timeZone: 'Asia/Kolkata',
+                      })} IST
                     </motion.p>
 
                     {/* Countdown */}
@@ -801,17 +802,19 @@ const SportsPlayerPage: React.FC = () => {
                     <Calendar className="w-5 h-5 text-primary mt-0.5" />
                     <div>
                       <p className="text-white font-medium">
-                        {new Date(currentEvent.scheduledAt).toLocaleDateString('en-US', {
+                        {new Date(currentEvent.scheduledAt).toLocaleDateString('en-IN', {
                           weekday: 'long',
                           month: 'long',
                           day: 'numeric',
+                          timeZone: 'Asia/Kolkata',
                         })}
                       </p>
                       <p className="text-white/50 text-sm">
-                        {new Date(currentEvent.scheduledAt).toLocaleTimeString('en-US', {
+                        {new Date(currentEvent.scheduledAt).toLocaleTimeString('en-IN', {
                           hour: '2-digit',
                           minute: '2-digit',
-                        })}
+                          timeZone: 'Asia/Kolkata',
+                        })} IST
                       </p>
                     </div>
                   </div>

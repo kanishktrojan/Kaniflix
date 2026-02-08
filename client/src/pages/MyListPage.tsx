@@ -172,9 +172,7 @@ const MyListPage: React.FC = () => {
 
         {/* Loading */}
         {isLoading && (
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] bg-surface animate-pulse rounded-md" />
+          <div className="media-card-grid">
             ))}
           </div>
         )}
@@ -210,7 +208,7 @@ const MyListPage: React.FC = () => {
                   Movies
                   <Badge variant="default">{movies.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                <div className="media-card-grid">
                   {movies.map((item) => (
                     <div key={item._id} className="relative group">
                       <MediaCard item={toMediaItem(item)} />
@@ -243,7 +241,7 @@ const MyListPage: React.FC = () => {
                   TV Shows
                   <Badge variant="default">{tvShows.length}</Badge>
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+                <div className="media-card-grid">
                   {tvShows.map((item) => (
                     <div key={item._id} className="relative group">
                       <MediaCard item={toMediaItem(item)} />
