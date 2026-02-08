@@ -173,6 +173,8 @@ const MyListPage: React.FC = () => {
         {/* Loading */}
         {isLoading && (
           <div className="media-card-grid">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-[2/3] bg-surface animate-pulse rounded-md" />
             ))}
           </div>
         )}
