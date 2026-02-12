@@ -7,7 +7,6 @@ import { useAuthStore } from '@/store';
 import { authService } from '@/services';
 import { wakeUpBackend, startBackendKeepAlive, stopBackendKeepAlive } from '@/utils';
 import { PWANotifications, InstallPrompt, SplashScreen } from '@/components/ui';
-import { useStandaloneMode } from '@/hooks/usePWA';
 import logo from '@/assets/kaniflix_logo.png';
 
 // Wake up the backend immediately when app loads (for Render free tier)
@@ -29,12 +28,15 @@ const queryClient = new QueryClient({
 // Auth initializer component
 const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { checkAuth, isLoading, isAuthenticated } = useAuthStore();
-  const isStandalone = useStandaloneMode();
   const [showSplash, setShowSplash] = React.useState(() => {
-    // Show splash screen on first load in standalone mode
+    // Check standalone mode synchronously on init (useStandaloneMode hook is async)
     if (typeof window !== 'undefined') {
       const hasShown = sessionStorage.getItem('splash-shown');
-      return isStandalone && !hasShown;
+      if (hasShown) return false;
+      const isIOSStandalone = (navigator as any).standalone === true;
+      const isPWAStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+      return isIOSStandalone || isPWAStandalone || isFullscreen;
     }
     return false;
   });
