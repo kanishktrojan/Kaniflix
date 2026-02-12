@@ -71,8 +71,8 @@ const CountdownTimer: React.FC<{ targetDate: string }> = ({ targetDate }) => {
 
 // Live Badge Component
 const LiveBadge: React.FC<{ pulse?: boolean }> = ({ pulse = true }) => (
-  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-sm font-bold">
-    {pulse && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+  <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-red-600 text-white text-xs sm:text-sm font-bold">
+    {pulse && <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse" />}
     LIVE
   </span>
 );

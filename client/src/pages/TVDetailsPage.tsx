@@ -184,7 +184,7 @@ const TVDetailsPage: React.FC = () => {
     const timer = setTimeout(() => {
       hasAutoPlayedRef.current = true;
       setIsTrailerPlaying(true);
-    }, 10000); // 10 seconds
+    }, 5000); // 5 seconds
 
     return () => clearTimeout(timer);
   }, [trailerKey]);
@@ -286,7 +286,14 @@ const TVDetailsPage: React.FC = () => {
         />
 
         {/* Content - positioned from bottom like Netflix */}
-        <div className="absolute bottom-[5%] sm:bottom-[8%] md:bottom-[10%] left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-16">
+        <AnimatePresence>
+          {!isTrailerPlaying && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              className="absolute bottom-[5%] sm:bottom-[8%] md:bottom-[10%] left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-16"
+            >
             <div className="flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8 items-start md:items-end">
               {/* Poster */}
               <motion.div
@@ -380,14 +387,7 @@ const TVDetailsPage: React.FC = () => {
                 </p>
 
                 {/* Action Buttons */}
-                <AnimatePresence>
-                  {!isTrailerPlaying && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="flex flex-wrap gap-2 sm:gap-4"
-                    >
+                <div className="flex flex-wrap gap-2 sm:gap-4">
                       <Button size="lg" onClick={() => handlePlay()} className="px-4 sm:px-8 text-sm sm:text-base">
                         <Play className="w-5 h-5 mr-2" fill="white" />
                         Play S1 E1
@@ -435,12 +435,12 @@ const TVDetailsPage: React.FC = () => {
                           Watch Trailer
                         </Button>
                       )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                </div>
               </motion.div>
             </div>
-        </div>
+          </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Details Section */}

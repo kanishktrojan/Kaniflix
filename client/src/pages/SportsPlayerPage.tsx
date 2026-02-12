@@ -171,8 +171,8 @@ const CountdownTimer: React.FC<{ targetDate: string; onComplete?: () => void }> 
 // Premium Live Badge with Pulse Animation
 const LiveBadge: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs gap-1.5',
-    md: 'px-3 py-1.5 text-sm gap-2',
+    sm: 'px-1.5 py-0.5 text-[10px] gap-1',
+    md: 'px-2 py-1 text-xs gap-1.5',
     lg: 'px-4 py-2 text-base gap-2',
   };
 
@@ -230,11 +230,11 @@ const ViewerCount: React.FC<{ count: number }> = ({ count }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10"
+      className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-4 sm:py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10"
     >
-      <Eye className="w-4 h-4 text-primary" />
-      <span className="text-white font-semibold">{formatCount(displayCount)}</span>
-      <span className="text-white/60 text-sm">watching</span>
+      <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+      <span className="text-white font-semibold text-xs sm:text-sm">{formatCount(displayCount)}</span>
+      <span className="text-white/60 text-[10px] sm:text-sm">watching</span>
     </motion.div>
   );
 };
@@ -703,9 +703,9 @@ const SportsPlayerPage: React.FC = () => {
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="absolute top-4 left-4 z-10"
+                      className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10"
                     >
-                      <LiveBadge size="md" />
+                      <LiveBadge size="sm" />
                     </motion.div>
                   )}
 
@@ -714,7 +714,7 @@ const SportsPlayerPage: React.FC = () => {
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="absolute top-4 right-4 z-10"
+                      className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10"
                     >
                       <ViewerCount count={currentEvent.viewCount} />
                     </motion.div>
