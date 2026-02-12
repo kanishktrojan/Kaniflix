@@ -21,9 +21,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm md:px-4 md:py-2',
-  md: 'px-4 py-2 text-base md:px-5 md:py-2.5',
-  lg: 'px-6 py-3 text-lg md:px-8 md:py-3.5',
+  sm: 'px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm md:px-4 md:py-2',
+  md: 'px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base md:px-5 md:py-2.5',
+  lg: 'px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base md:px-8 md:py-3.5 md:text-lg',
   icon: 'p-2 md:p-2.5',
 };
 

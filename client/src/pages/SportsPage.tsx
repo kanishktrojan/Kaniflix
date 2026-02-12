@@ -403,7 +403,7 @@ const SportsCard: React.FC<{
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors"
+            className="mt-3 sm:mt-4 inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-6 sm:py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors text-sm sm:text-base"
           >
             <Play className="w-5 h-5 fill-current" />
             {isLive ? 'Watch Live' : 'View Details'}
@@ -757,7 +757,7 @@ const SportsPage: React.FC = () => {
           <button
             onClick={() => handleCategorySelect(null)}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap',
+              'px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap',
               !selectedCategory
                 ? 'bg-primary text-white'
                 : 'bg-surface text-text-secondary hover:text-white hover:bg-surface-dark'
@@ -770,7 +770,7 @@ const SportsPage: React.FC = () => {
               key={cat.id}
               onClick={() => handleCategorySelect(cat.id)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2',
+                'px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 sm:gap-2',
                 selectedCategory === cat.id
                   ? 'bg-primary text-white'
                   : 'bg-surface text-text-secondary hover:text-white hover:bg-surface-dark'
