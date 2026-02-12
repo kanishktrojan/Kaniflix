@@ -60,6 +60,10 @@ if (typeof window !== 'undefined') {
   initPWA();
 }
 
+// Remove the inline pre-splash placeholder from index.html
+const preSplash = document.getElementById('pre-splash');
+if (preSplash) preSplash.remove();
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
