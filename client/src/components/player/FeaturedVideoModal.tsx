@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import type { FeaturedContentItem } from '@/services/featuredService';
 import { featuredService } from '@/services/featuredService';
-import { getProxyUrl } from '@/services/proxyService';
+
 import { useAuthStore } from '@/store';
 
 // JW Player is typed globally
