@@ -379,7 +379,12 @@ const HomePage: React.FC = () => {
     queryKey: ['featured-details', featuredContent?.id, featuredContent?.mediaType],
     queryFn: async (): Promise<{ logoPath?: string | null } | null> => {
       if (!featuredContent) return null;
-      if ((featuredContent as any).isFeaturedCustom) return { logoPath: null }; // Custom items don't have TMDB logo fetching here
+      if ((featuredContent as any).isFeaturedCustom) {
+        if ((featuredContent as any).originalItem?.logoImage) {
+          return { logoPath: (featuredContent as any).originalItem.logoImage };
+        }
+        return { logoPath: null }; // Custom items don't have TMDB logo fetching here
+      }
 
       const mediaType = featuredContent.mediaType || (featuredContent.title ? 'movie' : 'tv');
       const details = mediaType === 'movie'
@@ -391,8 +396,10 @@ const HomePage: React.FC = () => {
     staleTime: 10 * 60 * 1000, // Cache for 10 minutes
   });
 
-  // Get logo path from featured details
-  const featuredLogoPath = featuredDetails?.logoPath || null;
+  // Get logo path from featured details or directly from custom item
+  const featuredLogoPath = (featuredContent as any)?.isFeaturedCustom
+    ? (featuredContent as any)?.originalItem?.logoImage || null
+    : featuredDetails?.logoPath || null;
 
   useEffect(() => {
     if (heroItems.length <= 1) return;

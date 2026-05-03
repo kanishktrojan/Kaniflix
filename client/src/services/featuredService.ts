@@ -16,6 +16,7 @@ export interface FeaturedContentItem {
   scheduledAt: string | null;
   backdropImage: string;
   posterImage: string;
+  logoImage: string;
   streamUrl: string;
   trailerUrl: string;
   tmdbId: string;

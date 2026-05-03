@@ -64,9 +64,17 @@ export const FeaturedInfoModal: React.FC<FeaturedInfoModalProps> = ({
                     {item.badgeLabel}
                   </span>
                 )}
-                <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                  {item.title}
-                </h1>
+                {item.logoImage ? (
+                  <img
+                    src={item.logoImage}
+                    alt={item.title}
+                    className="max-h-24 sm:max-h-32 w-auto max-w-[80%] object-contain drop-shadow-2xl mb-4"
+                  />
+                ) : (
+                  <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                    {item.title}
+                  </h1>
+                )}
 
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                   <button

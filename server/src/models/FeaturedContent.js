@@ -75,6 +75,11 @@ const featuredContentSchema = new mongoose.Schema(
       required: [true, 'Poster image URL is required'],
       trim: true
     },
+    logoImage: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     streamUrl: {
       type: String,
       required: [true, 'Stream URL is required'],

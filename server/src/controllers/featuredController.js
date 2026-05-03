@@ -30,6 +30,7 @@ const createFeaturedContent = asyncHandler(async (req, res) => {
     scheduledAt,
     backdropImage,
     posterImage,
+    logoImage,
     streamUrl,
     trailerUrl,
     tmdbId
@@ -54,6 +55,7 @@ const createFeaturedContent = asyncHandler(async (req, res) => {
     scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
     backdropImage,
     posterImage,
+    logoImage,
     streamUrl,
     trailerUrl: trailerUrl || '',
     tmdbId: tmdbId || '',
@@ -155,7 +157,7 @@ const updateFeaturedContent = asyncHandler(async (req, res) => {
   const allowedUpdates = [
     'title', 'description', 'contentType', 'genre', 'year', 'rating', 'duration',
     'badgeLabel', 'placement', 'priorityOrder', 'status', 'scheduledAt',
-    'backdropImage', 'posterImage', 'streamUrl', 'trailerUrl', 'tmdbId'
+    'backdropImage', 'posterImage', 'logoImage', 'streamUrl', 'trailerUrl', 'tmdbId'
   ];
 
   allowedUpdates.forEach(field => {

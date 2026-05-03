@@ -47,6 +47,7 @@ const initialFormData: Partial<FeaturedContentItem> = {
   scheduledAt: '',
   backdropImage: '',
   posterImage: '',
+  logoImage: '',
   streamUrl: '',
   trailerUrl: '',
   tmdbId: '',
@@ -102,6 +103,7 @@ const AdminFeatured: React.FC = () => {
           : '',
         backdropImage: editingItem.backdropImage,
         posterImage: editingItem.posterImage,
+        logoImage: editingItem.logoImage || '',
         streamUrl: editingItem.streamUrl,
         trailerUrl: editingItem.trailerUrl || '',
         tmdbId: editingItem.tmdbId || '',
@@ -662,6 +664,18 @@ const AdminFeatured: React.FC = () => {
                       value={formData.posterImage}
                       onChange={handleInputChange}
                       required
+                      className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-text-secondary mb-1">Logo Image URL (Optional)</label>
+                    <input
+                      type="url"
+                      name="logoImage"
+                      value={formData.logoImage || ''}
+                      onChange={handleInputChange}
+                      placeholder="Title logo to display instead of text"
                       className="w-full px-4 py-2 bg-background border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
                     />
                   </div>
