@@ -6,6 +6,7 @@ export { userContentService } from './userContentService';
 export { progressService, queueBackendSync, getPendingSyncs, clearPendingSyncs } from './progressService';
 export { adminService } from './adminService';
 export { sportsService } from './sportsService';
+export { featuredService } from './featuredService';
 export { profileService } from './profileService';
 export { paymentService } from './paymentService';
 export { downloadService } from './downloadService';

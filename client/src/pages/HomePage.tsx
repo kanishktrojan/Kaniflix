@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { tmdbService, userContentService, progressService } from '@/services';
 import { HeroBanner, MediaRow } from '@/components/media';
 import { VideoModal } from '@/components/player';
+import { FeaturedInfoModal, FeaturedVideoModal } from '@/components/player';
+import { featuredService } from '@/services/featuredService';
+import type { FeaturedContentItem } from '@/services/featuredService';
 import { useAuthStore } from '@/store';
 import { useWatchProgress } from '@/hooks';
 import type { MediaItem } from '@/types';
@@ -34,6 +37,11 @@ const HomePage: React.FC = () => {
   const [playingItem, setPlayingItem] = useState<MediaItem | null>(null);
   const [playingSeason, setPlayingSeason] = useState<number | undefined>();
   const [playingEpisode, setPlayingEpisode] = useState<number | undefined>();
+
+  // Featured modals state
+  const [isFeaturedInfoOpen, setIsFeaturedInfoOpen] = useState(false);
+  const [isFeaturedVideoOpen, setIsFeaturedVideoOpen] = useState(false);
+  const [selectedFeatured, setSelectedFeatured] = useState<FeaturedContentItem | null>(null);
 
   // State to trigger re-computation of local continue watching
   const [localCWVersion, setLocalCWVersion] = useState(0);
@@ -257,6 +265,11 @@ const HomePage: React.FC = () => {
   });
 
   // Fetch featured content
+  const { data: featuredItemsRaw, isLoading: featuredLoading } = useQuery({
+    queryKey: ['featured', 'public'],
+    queryFn: () => featuredService.getActiveFeatured(),
+  });
+
   const { data: trending, isLoading: trendingLoading } = useQuery({
     queryKey: ['trending'],
     queryFn: () => tmdbService.getTrending('all', 'day'),
@@ -299,10 +312,48 @@ const HomePage: React.FC = () => {
     queryFn: () => tmdbService.getAiringTodayTV(),
   });
 
-  // Get top 5 trending items for hero rotation
+  const featuredBannersCount = useMemo(() => {
+    return (featuredItemsRaw || []).filter(
+      (item: FeaturedContentItem) => item.placement === 'banner' || item.placement === 'both'
+    ).length;
+  }, [featuredItemsRaw]);
+
+  // Get top 5 trending items for hero rotation, prepending featured banners
   const heroItems = useMemo(() => {
-    return trending?.results?.slice(0, 5) || [];
-  }, [trending?.results]);
+    const featuredBanners = (featuredItemsRaw || [])
+      .filter((item: FeaturedContentItem) => item.placement === 'banner' || item.placement === 'both')
+      .map((item: FeaturedContentItem) => ({
+        id: item._id as any, // Using _id as id
+        title: item.title,
+        overview: item.description,
+        backdropPath: item.backdropImage,
+        posterPath: item.posterImage,
+        mediaType: item.contentType as any,
+        voteAverage: 0,
+        isFeaturedCustom: true,
+        originalItem: item, // Keep reference to original
+      }));
+
+    const tmdbBanners = trending?.results?.slice(0, 5) || [];
+    return [...featuredBanners, ...tmdbBanners].slice(0, 5); // Still limit to top 5
+  }, [trending?.results, featuredItemsRaw]);
+
+  // Transform featured trending items
+  const featuredTrendingItems = useMemo(() => {
+    return (featuredItemsRaw || [])
+      .filter((item: FeaturedContentItem) => item.placement === 'trending' || item.placement === 'both')
+      .map((item: FeaturedContentItem) => ({
+        id: item._id as any,
+        title: item.title,
+        overview: item.description,
+        backdropPath: item.backdropImage,
+        posterPath: item.posterImage,
+        mediaType: item.contentType as any,
+        voteAverage: 0,
+        isFeaturedCustom: true,
+        originalItem: item,
+      }));
+  }, [featuredItemsRaw]);
 
   // Transform continue watching data to MediaItem format (already enriched with TMDB data)
   const continueWatchingItems = useMemo(() => {
@@ -328,6 +379,8 @@ const HomePage: React.FC = () => {
     queryKey: ['featured-details', featuredContent?.id, featuredContent?.mediaType],
     queryFn: async (): Promise<{ logoPath?: string | null } | null> => {
       if (!featuredContent) return null;
+      if ((featuredContent as any).isFeaturedCustom) return { logoPath: null }; // Custom items don't have TMDB logo fetching here
+
       const mediaType = featuredContent.mediaType || (featuredContent.title ? 'movie' : 'tv');
       const details = mediaType === 'movie'
         ? await tmdbService.getMovieDetails(featuredContent.id)
@@ -351,7 +404,13 @@ const HomePage: React.FC = () => {
     return () => clearInterval(interval);
   }, [heroItems.length]);
 
-  const handlePlay = useCallback((item: MediaItem, season?: number, episode?: number) => {
+  const handlePlay = useCallback((item: MediaItem | any, season?: number, episode?: number) => {
+    if (item.isFeaturedCustom) {
+      setSelectedFeatured(item.originalItem);
+      setIsFeaturedVideoOpen(true);
+      return;
+    }
+
     if (!isAuthenticated) {
       const mediaType = item.mediaType || (item.title ? 'movie' : 'tv');
       navigate('/login', { state: { from: `/${mediaType}/${item.id}` } });
@@ -371,7 +430,12 @@ const HomePage: React.FC = () => {
     setPlayingEpisode(undefined);
   }, [saveOnClose]);
 
-  const handleInfo = (item: MediaItem) => {
+  const handleInfo = (item: MediaItem | any) => {
+    if (item.isFeaturedCustom) {
+      setSelectedFeatured(item.originalItem);
+      setIsFeaturedInfoOpen(true);
+      return;
+    }
     const mediaType = item.mediaType || (item.title ? 'movie' : 'tv');
     navigate(`/${mediaType}/${item.id}`);
   };
@@ -430,9 +494,25 @@ const HomePage: React.FC = () => {
         />
       )}
 
+      {/* Featured Modals */}
+      <FeaturedInfoModal
+        isOpen={isFeaturedInfoOpen}
+        onClose={() => setIsFeaturedInfoOpen(false)}
+        item={selectedFeatured}
+        onPlay={() => {
+          setIsFeaturedInfoOpen(false);
+          setIsFeaturedVideoOpen(true);
+        }}
+      />
+      <FeaturedVideoModal
+        isOpen={isFeaturedVideoOpen}
+        onClose={() => setIsFeaturedVideoOpen(false)}
+        item={selectedFeatured}
+      />
+
       {/* Hero Banner - Full width, Netflix style */}
       <div className="relative">
-        {trendingLoading ? (
+        {trendingLoading || featuredLoading ? (
           <div className="h-[70vw] sm:h-[56.25vw] min-h-[320px] sm:min-h-[400px] max-h-[80vh] lg:max-h-[90vh] bg-[#141414] animate-pulse" />
         ) : featuredContent ? (
           <HeroBanner
@@ -472,11 +552,14 @@ const HomePage: React.FC = () => {
           />
         )}
 
-        {/* Trending Now - Use slice to skip hero item */}
+        {/* Trending Now - Use slice to skip hero item if no featured banners were prepended */}
         <MediaRow
           title="Trending Now"
-          items={trending?.results?.slice(1) || []}
-          isLoading={trendingLoading}
+          items={[
+            ...featuredTrendingItems,
+            ...(trending?.results?.slice(featuredBannersCount > 0 ? 0 : 1) || [])
+          ]}
+          isLoading={trendingLoading || featuredLoading}
           onPlay={handlePlay}
           onAddToWatchlist={handleAddToWatchlist}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}

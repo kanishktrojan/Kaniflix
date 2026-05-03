@@ -25,6 +25,7 @@ import {
   AdminAnalytics,
   AdminActivity,
   AdminSports,
+  AdminFeatured,
   AdminSettings,
   AdminSubscriptions,
 } from '@/pages/admin';
@@ -166,6 +167,10 @@ const router = createBrowserRouter([
       {
         path: 'sports',
         element: <AdminSports />,
+      },
+      {
+        path: 'featured',
+        element: <AdminFeatured />,
       },
       {
         path: 'analytics',

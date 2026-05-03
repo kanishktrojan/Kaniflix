@@ -3,3 +3,4 @@ export { useUIStore } from './uiStore';
 export { usePlayerStore } from './playerStore';
 export { useAdminStore } from './adminStore';
 export { useSportsStore } from './sportsStore';
+export { useFeaturedStore } from './featuredStore';

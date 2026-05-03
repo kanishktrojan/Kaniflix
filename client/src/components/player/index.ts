@@ -3,3 +3,5 @@ export { EmbedPlayer } from './EmbedPlayer';
 export type { PlayerEventData, MediaProgressData, PlayerEventType } from './EmbedPlayer';
 export { VideoModal } from './VideoModal';
 export { EpisodeList, SeasonSelector } from './EpisodeList';
+export { FeaturedInfoModal } from './FeaturedInfoModal';
+export { FeaturedVideoModal } from './FeaturedVideoModal';

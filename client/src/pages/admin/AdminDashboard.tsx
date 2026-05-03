@@ -9,6 +9,7 @@ import {
   Tv,
   Clock,
   CheckCircle,
+  Star,
 } from 'lucide-react';
 import { useAdminStore } from '@/store';
 import {
@@ -186,6 +187,26 @@ const AdminDashboard: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="bg-surface-dark rounded-xl p-6 border border-white/5"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-500/20 rounded-lg">
+                <Star className="w-5 h-5 text-yellow-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Featured</h3>
+            </div>
+            <a href="/admin/featured" className="text-sm text-primary hover:underline">Manage</a>
+          </div>
+          <p className="text-text-secondary text-sm">
+            Manage custom hero banners and trending items
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="bg-surface-dark rounded-xl p-6 border border-white/5"
         >
           <div className="flex items-center gap-3 mb-4">

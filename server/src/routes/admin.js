@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const sportsController = require('../controllers/sportsController');
+const featuredController = require('../controllers/featuredController');
 const subscriptionAdminController = require('../controllers/subscriptionAdminController');
 const { authenticate, authorize } = require('../middlewares/auth');
 
@@ -40,6 +41,14 @@ router.delete('/sports/:id', sportsController.deleteSportsEvent);
 router.patch('/sports/:id/toggle-live', sportsController.toggleLiveStatus);
 router.patch('/sports/:id/scores', sportsController.updateScores);
 router.post('/sports/bulk-update', sportsController.bulkUpdateSportsEvents);
+
+// Featured Content Management
+router.get('/featured', featuredController.getAllFeaturedContentAdmin);
+router.get('/featured/:id', featuredController.getFeaturedContentByIdAdmin);
+router.post('/featured', featuredController.createFeaturedContent);
+router.put('/featured/:id', featuredController.updateFeaturedContent);
+router.delete('/featured/:id', featuredController.deleteFeaturedContent);
+router.post('/featured/bulk-update', featuredController.bulkUpdateFeaturedContent);
 
 // Subscription Plans Management
 router.get('/subscriptions/stats', subscriptionAdminController.getSubscriptionStats);

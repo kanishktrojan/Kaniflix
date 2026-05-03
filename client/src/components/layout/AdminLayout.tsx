@@ -15,6 +15,7 @@ import {
   Trophy,
   Settings,
   CreditCard,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useAuthStore } from '@/store';
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { href: '/admin/sports', label: 'Sports', icon: Trophy },
+  { href: '/admin/featured', label: 'Featured', icon: Star },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/activity', label: 'Activity', icon: Activity },
   { href: '/admin/settings', label: 'Settings', icon: Settings },

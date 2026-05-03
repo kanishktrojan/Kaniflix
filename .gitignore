@@ -12,6 +12,7 @@ build/
 # Email
 email/
 proxy/
+production_env/
 
 # Environment files
 .env
